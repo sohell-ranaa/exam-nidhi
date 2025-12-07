@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - {{ app_name }}{% endblock %}
+
+{% set active_page = 'profile' %}
+{% block nav_items %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin.html' %}
+{% else %}
+{% include 'components/nav_student.html' %}
+{% endif %}
+{% endblock %}
+{% block mobile_nav %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin_mobile.html' %}
+{% else %}
+{% include 'components/nav_student_mobile.html' %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('profile.view_profile') }}" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Profile
+    </a>
+    <h1 class="page-title">Edit Profile</h1>
+    <p class="page-subtitle">Update your account information</p>
+</div>
+
+<div class="edit-card">
+    <form id="editForm">
+        <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="full_name" class="form-input" value="{{ user.full_name }}" required minlength="2" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="{{ user.email }}" disabled>
+            <span class="form-hint">Email cannot be changed</span>
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="saveBtn">Save Changes</button>
+            <a href="{{ url_for('profile.view_profile') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--azure-blue);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+.back-link svg {
+    width: 16px;
+    height: 16px;
+}
+.edit-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1.5rem;
+    max-width: 400px;
+}
+.btn-group {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+</style>
+
+<script>
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const formData = new FormData(this);
+
+    try {
+        const response = await fetch('{{ url_for("profile.edit_profile") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: formData.get('full_name') })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message, 'success');
+        } else {
+            showToast(result.error || 'Failed to update profile', 'error');
+        }
+    } catch (error) {
+        showToast('Connection error', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}My Exams - {{ app_name }}{% endblock %}
+
+{% set active_page = 'exams' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">My Exams</h1>
+<p class="page-subtitle">View and manage your practice exams</p>
+
+<!-- Filters -->
+<div class="filters-card">
+    <form method="get" class="filters-form" id="filterForm">
+        <div class="filter-group">
+            <label class="filter-label">Subject</label>
+            <select name="subject" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Subjects</option>
+                {% for s in subjects %}
+                <option value="{{ s.code }}" {% if filters.subject == s.code %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Status</label>
+            <select name="status" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Status</option>
+                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="released" {% if filters.status == 'released' %}selected{% endif %}>Results Released</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">From Date</label>
+            <input type="date" name="from" class="form-input" value="{{ filters.from }}" onchange="document.getElementById('filterForm').submit()">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">To Date</label>
+            <input type="date" name="to" class="form-input" value="{{ filters.to }}" onchange="document.getElementById('filterForm').submit()">
+        </div>
+        {% if filters.subject or filters.status or filters.from or filters.to %}
+        <a href="{{ url_for('student.my_exams') }}" class="btn btn-secondary">Clear Filters</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Exams List -->
+<div class="exams-list">
+    {% if exams %}
+    {% for exam in exams %}
+    <div class="exam-card">
+        <div class="exam-card-icon subject-{{ exam.subject_code|lower }}">
+            {{ exam.subject_name[0] }}
+        </div>
+        <div class="exam-card-content">
+            <div class="exam-card-title">{{ exam.exam_title }}</div>
+            <div class="exam-card-meta">
+                <span class="exam-subject">{{ exam.subject_name }}</span>
+                <span class="exam-date">{{ exam.exam_date_formatted }}{% if exam.scheduled_time_formatted %} at {{ exam.scheduled_time_formatted }}{% endif %}</span>
+            </div>
+        </div>
+        <div class="exam-card-right">
+            {% if exam.status == 'pending' %}
+            {% if exam.is_future %}
+            {% if exam.is_soon %}
+            <span class="badge badge-soon">Soon</span>
+            {% else %}
+            <span class="badge badge-scheduled">Scheduled</span>
+            {% endif %}
+            <span class="scheduled-text">Starts at {{ exam.scheduled_time_formatted }}</span>
+            {% else %}
+            <span class="badge badge-pending">Pending</span>
+            <a href="{{ url_for('student.take_exam', exam_id=exam.id) }}" class="btn btn-primary btn-sm">Start</a>
+            {% endif %}
+            {% elif exam.status == 'in_progress' %}
+            <span class="badge badge-progress">In Progress</span>
+            <a href="{{ url_for('student.take_exam', exam_id=exam.id) }}" class="btn btn-primary btn-sm">Continue</a>
+            {% elif exam.status == 'submitted' %}
+            <span class="badge badge-submitted">Submitted</span>
+            <span class="waiting-text">Awaiting Review</span>
+            {% elif exam.status == 'grading' %}
+            <span class="badge badge-grading">Being Graded</span>
+            <span class="waiting-text">Awaiting Review</span>
+            {% elif exam.status == 'released' %}
+            <span class="score-badge {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}">
+                {{ "%.0f"|format(exam.percentage or 0) }}%
+            </span>
+            <a href="{{ url_for('student.view_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">View</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>No exams found</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.filters-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+.filter-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.form-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--neutral-gray-20);
+    border-radius: var(--radius-medium);
+    font-size: 0.875rem;
+    background: var(--neutral-white);
+}
+.exams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.exam-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: box-shadow 0.15s ease;
+}
+.exam-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.exam-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-large);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+.exam-card-content {
+    flex: 1;
+    min-width: 0;
+}
+.exam-card-title {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.exam-card-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--neutral-gray-50);
+}
+.exam-card-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+.score-badge {
+    font-size: 1.125rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+.score-excellent { background: #DFF6DD; color: #107C10; }
+.score-good { background: var(--azure-lighter-blue); color: var(--azure-blue); }
+.score-average { background: #FFF4CE; color: #835C00; }
+.score-poor { background: var(--error-bg); color: var(--error); }
+.badge-submitted { background: var(--neutral-gray-6); color: var(--neutral-gray-60); }
+.badge-grading { background: #E1DFDD; color: var(--neutral-gray-60); }
+.badge-scheduled { background: #E8F4FD; color: #0078D4; }
+.badge-soon { background: #FFF0E5; color: #D83B01; animation: pulse-soon 2s infinite; }
+@keyframes pulse-soon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+.waiting-text {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+}
+.scheduled-text {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+    font-style: italic;
+}
+@media (max-width: 640px) {
+    .exam-card {
+        flex-wrap: wrap;
+    }
+    .exam-card-right {
+        width: 100%;
+        margin-top: 0.5rem;
+        justify-content: space-between;
+    }
+}
+</style>
+{% endblock %}

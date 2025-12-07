@@ -1,0 +1,8 @@
+{# Student Navigation Component - Desktop #}
+{# Usage: {% include 'components/nav_student.html' with context %} #}
+{# Required: active_page variable (e.g., 'dashboard', 'exams', 'results', 'history') #}
+
+<a href="{{ url_for('student.dashboard') }}" {% if active_page == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+<a href="{{ url_for('student.my_exams') }}" {% if active_page == 'exams' %}class="active"{% endif %}>My Exams</a>
+<a href="{{ url_for('student.results') }}" {% if active_page == 'results' %}class="active"{% endif %}>Results</a>
+<a href="{{ url_for('student.history') }}" {% if active_page == 'history' %}class="active"{% endif %}>History</a>

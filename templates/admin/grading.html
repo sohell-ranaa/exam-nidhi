@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Grading - {{ app_name }}{% endblock %}
+
+{% set active_page = 'grading' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Grading Queue</h1>
+<p class="page-subtitle">{{ exams|length }} exams awaiting review</p>
+
+<div class="card">
+    {% if exams %}
+    <div>
+        {% for exam in exams %}
+        <a href="{{ url_for('admin.grade_exam', exam_id=exam.id) }}" class="list-item" style="text-decoration: none; color: inherit;">
+            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+                {{ exam.subject_name[0] }}
+            </div>
+            <div class="list-item-content">
+                <div class="list-item-title">{{ exam.student_name }}</div>
+                <div class="list-item-subtitle">{{ exam.exam_title }} - Submitted: {{ exam.submitted_at }}</div>
+            </div>
+            <div class="list-item-action">
+                <span class="badge badge-{{ exam.status }}">{{ exam.status|title }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>No exams to grade. All caught up!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

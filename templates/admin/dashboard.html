@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+
+{% set active_page = 'dashboard' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-banner {
+        background: linear-gradient(135deg, #0078D4 0%, #004E8C 100%);
+        color: white;
+        padding: 32px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+    }
+    .welcome-banner h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .welcome-banner p {
+        opacity: 0.9;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .welcome-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .welcome-actions .btn {
+        background: white;
+        color: #0078D4;
+        border: none;
+    }
+    .welcome-actions .btn:hover {
+        background: #F3F2F1;
+    }
+    .welcome-actions .btn-outline {
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.5);
+    }
+    .welcome-actions .btn-outline:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: white;
+    }
+
+    /* Getting Started Wizard */
+    .wizard-section {
+        margin-bottom: 32px;
+    }
+    .wizard-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #323130;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .wizard-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    .wizard-step {
+        background: white;
+        border: 1px solid #EDEBE9;
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: all 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+    .wizard-step:hover {
+        border-color: #0078D4;
+        box-shadow: 0 2px 8px rgba(0,120,212,0.15);
+    }
+    .wizard-step.completed {
+        background: #F3F9FD;
+        border-color: #0078D4;
+    }
+    .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #F3F2F1;
+        color: #605E5C;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .wizard-step.completed .step-number {
+        background: #0078D4;
+        color: white;
+    }
+    .step-content h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #323130;
+        margin-bottom: 4px;
+    }
+    .step-content p {
+        font-size: 12px;
+        color: #605E5C;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .step-arrow {
+        margin-left: auto;
+        color: #A19F9D;
+    }
+    .wizard-step:hover .step-arrow {
+        color: #0078D4;
+    }
+
+    /* Stats Cards */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    @media (min-width: 768px) {
+        .stats-row {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    .stat-card {
+        background: white;
+        border: 1px solid #EDEBE9;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    .stat-card .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+    .stat-card .stat-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    .stat-card.blue .stat-icon { background: #DEECF9; color: #0078D4; }
+    .stat-card.green .stat-icon { background: #DFF6DD; color: #107C10; }
+    .stat-card.orange .stat-icon { background: #FFF4CE; color: #C87C00; }
+    .stat-card.purple .stat-icon { background: #EDE7F6; color: #7B1FA2; }
+    .stat-value {
+        font-size: 28px;
+        font-weight: 600;
+        color: #323130;
+        line-height: 1;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #605E5C;
+        margin-top: 4px;
+    }
+
+    /* Quick Actions */
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #323130;
+        margin-bottom: 16px;
+    }
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .action-card {
+        background: white;
+        border: 1px solid #EDEBE9;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+    }
+    .action-card:hover {
+        border-color: #0078D4;
+        background: #F3F9FD;
+    }
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #F3F2F1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #605E5C;
+    }
+    .action-card:hover .action-icon {
+        background: #0078D4;
+        color: white;
+    }
+    .action-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    .action-text h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #323130;
+        margin: 0;
+    }
+    .action-text p {
+        font-size: 12px;
+        color: #605E5C;
+        margin: 2px 0 0 0;
+    }
+
+    /* Recent Activity */
+    .activity-list {
+        background: white;
+        border: 1px solid #EDEBE9;
+        border-radius: 8px;
+    }
+    .activity-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #EDEBE9;
+        font-weight: 600;
+        font-size: 14px;
+        color: #323130;
+    }
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        border-bottom: 1px solid #EDEBE9;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .activity-icon.eng { background: #DEECF9; color: #0078D4; }
+    .activity-icon.mat { background: #FCE4EC; color: #C2185B; }
+    .activity-icon.ict { background: #EDE7F6; color: #7B1FA2; }
+    .activity-icon.sci { background: #E8F5E9; color: #388E3C; }
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+    .activity-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #323130;
+    }
+    .activity-meta {
+        font-size: 12px;
+        color: #605E5C;
+    }
+    .activity-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .badge-pending { background: #F3F2F1; color: #605E5C; }
+    .badge-submitted { background: #DEECF9; color: #0078D4; }
+    .badge-grading { background: #FFF4CE; color: #C87C00; }
+    .badge-released { background: #DFF6DD; color: #107C10; }
+
+    .empty-state {
+        padding: 48px 20px;
+        text-align: center;
+        color: #605E5C;
+    }
+    .empty-state svg {
+        width: 48px;
+        height: 48px;
+        opacity: 0.4;
+        margin-bottom: 12px;
+    }
+    .empty-state p {
+        font-size: 14px;
+    }
+
+    .logout-link {
+        display: block;
+        text-align: center;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #EDEBE9;
+    }
+    .logout-link a {
+        color: #605E5C;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .logout-link a:hover {
+        color: #D13438;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <h1>Welcome back, {{ user.full_name }}!</h1>
+    <p>Manage practice exams for Rifah. Use the steps below to get started or continue where you left off.</p>
+    <div class="welcome-actions">
+        <a href="{{ url_for('admin.exams') }}" class="btn">Assign New Exam</a>
+        <a href="{{ url_for('questions.question_bank') }}" class="btn btn-outline">Browse Questions</a>
+    </div>
+</div>
+
+<!-- Getting Started Wizard -->
+<div class="wizard-section">
+    <div class="wizard-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        How to Use This System
+    </div>
+    <div class="wizard-steps">
+        <a href="{{ url_for('questions.question_bank') }}" class="wizard-step {% if question_set_count > 0 %}completed{% endif %}">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Browse Question Bank</h3>
+                <p>View 500+ questions organized by subject: English, Math, ICT, and Science. Preview and download PDFs.</p>
+            </div>
+            <svg class="step-arrow" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="{{ url_for('admin.exams') }}" class="wizard-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Assign Practice Exam</h3>
+                <p>Select a question set and assign it to Rifah with a deadline. She'll receive a notification.</p>
+            </div>
+            <svg class="step-arrow" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="{{ url_for('admin.grading') }}" class="wizard-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Grade Written Answers</h3>
+                <p>MCQs are auto-graded. Review and grade written/essay answers manually.</p>
+            </div>
+            <svg class="step-arrow" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="{{ url_for('admin.reports') }}" class="wizard-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>View Performance Reports</h3>
+                <p>Track progress across subjects and identify areas that need more practice.</p>
+            </div>
+            <svg class="step-arrow" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="stats-row">
+    <div class="stat-card blue">
+        <div class="stat-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+        <div class="stat-value">{{ student_count }}</div>
+        <div class="stat-label">Students</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div class="stat-value">{{ question_set_count }}</div>
+        <div class="stat-label">Question Sets</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <div class="stat-value">{{ pending_grading }}</div>
+        <div class="stat-label">Pending Grading</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        </div>
+        <div class="stat-value">4</div>
+        <div class="stat-label">Subjects</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-title">Quick Actions</div>
+<div class="quick-actions">
+    <a href="{{ url_for('questions.question_bank') }}" class="action-card">
+        <div class="action-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="action-text">
+            <h4>Question Bank</h4>
+            <p>Browse and preview questions</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.exams') }}" class="action-card">
+        <div class="action-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <div class="action-text">
+            <h4>Assign Exam</h4>
+            <p>Create new practice exam</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.grading') }}" class="action-card">
+        <div class="action-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <div class="action-text">
+            <h4>Grade Exams</h4>
+            <p>Review submitted answers</p>
+        </div>
+    </a>
+    <a href="{{ url_for('settings.settings_page') }}" class="action-card">
+        <div class="action-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="action-text">
+            <h4>Settings</h4>
+            <p>Configure SMTP & grading</p>
+        </div>
+    </a>
+</div>
+
+<!-- Recent Activity -->
+<div class="section-title">Recent Activity</div>
+<div class="activity-list">
+    <div class="activity-header">Latest Exam Submissions</div>
+    {% if recent_submissions %}
+        {% for sub in recent_submissions %}
+        <div class="activity-item">
+            <div class="activity-icon {{ sub.subject_name[:3]|lower }}">
+                {{ sub.subject_name[0] }}
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">{{ sub.student_name }} - {{ sub.exam_title }}</div>
+                <div class="activity-meta">{{ sub.submitted_at }}</div>
+            </div>
+            <span class="activity-badge badge-{{ sub.status }}">{{ sub.status|replace('_', ' ')|title }}</span>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p>No exam submissions yet.<br>Assign an exam to get started!</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="logout-link">
+    <a href="{{ url_for('auth.logout') }}">Sign out</a>
+</div>
+{% endblock %}

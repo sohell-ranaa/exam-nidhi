@@ -1,0 +1,946 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exam.exam_title }} - {{ app_name }}{% endblock %}
+
+{% set active_page = 'exams' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/drawing.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Timer Bar -->
+<div class="exam-timer-bar" id="timerBar">
+    <div class="timer-content">
+        <div class="timer-info">
+            <span class="timer-subject">{{ exam.subject_name }}</span>
+            <span class="timer-title">{{ exam.exam_title }}</span>
+        </div>
+        <div class="timer-display" id="timerDisplay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            <span id="timerText">00:00</span>
+            <span class="timer-label">/ 60:00</span>
+        </div>
+    </div>
+    <div class="timer-progress">
+        <div class="timer-progress-bar" id="timerProgressBar"></div>
+    </div>
+</div>
+
+<!-- Exam Header -->
+<div class="exam-header">
+    <div class="exam-info">
+        <h1 class="exam-title">{{ exam.exam_title }}</h1>
+        <div class="exam-meta">
+            <span class="exam-subject-badge subject-{{ exam.subject_code|lower if exam.subject_code else 'eng' }}">
+                {{ exam.subject_name }}
+            </span>
+            <span class="exam-questions">{{ questions|length }} Questions</span>
+            <span class="exam-marks">{{ exam.max_score }} Marks</span>
+        </div>
+    </div>
+    <button type="button" class="btn btn-primary submit-btn" onclick="submitExam()" id="submit-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Submit Exam
+    </button>
+</div>
+
+<!-- Progress Indicator -->
+<div class="exam-progress">
+    <div class="progress-text">
+        <span>Progress: <strong id="answeredCount">0</strong> / {{ questions|length }} answered</span>
+    </div>
+    <div class="progress">
+        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+    </div>
+</div>
+
+<!-- Questions -->
+<form id="exam-form">
+    {% for question in questions %}
+    <div class="question-card" data-question-id="{{ question.id }}" id="question-{{ question.id }}">
+        <div class="question-header">
+            <div class="question-number-badge">Q{{ question.question_number }}</div>
+            <div class="question-type-badge">{{ question.question_type|replace('_', ' ')|title }}</div>
+            <div class="question-marks-badge">{{ question.marks }} mark{% if question.marks > 1 %}s{% endif %}</div>
+        </div>
+
+        <div class="question-body">
+            <div class="question-text">
+                {% if question.question_html %}
+                {{ question.question_html|safe }}
+                {% else %}
+                {{ question.question_text }}
+                {% endif %}
+            </div>
+
+            {% if question.image_url %}
+            <div class="question-image">
+                <img src="{{ question.image_url }}" alt="Question image">
+            </div>
+            {% endif %}
+
+            <div class="answer-section">
+                {% if question.question_type == 'mcq' %}
+                <div class="mcq-options">
+                    {% for option in question.options %}
+                    <label class="mcq-option {% if question.student_answer == option %}selected{% endif %}">
+                        <input type="radio" name="q{{ question.id }}" value="{{ option }}"
+                               {% if question.student_answer == option %}checked{% endif %}
+                               onchange="saveAnswer({{ question.id }}, this.value)">
+                        <div class="mcq-radio">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+                        </div>
+                        <span class="mcq-text">{{ option }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                {% elif question.question_type == 'fill_blank' %}
+                <div class="fill-blank-wrapper">
+                    <input type="text" class="fill-blank-input" name="q{{ question.id }}"
+                           value="{{ question.student_answer or '' }}"
+                           placeholder="Type your answer here..."
+                           onblur="saveAnswer({{ question.id }}, this.value)">
+                </div>
+
+                {% elif question.question_type == 'written' %}
+                <div class="written-wrapper">
+                    <textarea class="written-textarea" name="q{{ question.id }}"
+                              placeholder="Write your answer here..."
+                              rows="5"
+                              onblur="saveAnswer({{ question.id }}, this.value)">{{ question.student_answer or '' }}</textarea>
+                    <div class="textarea-hint">Your answer will be reviewed by your teacher</div>
+                </div>
+
+                {% elif question.question_type == 'matching' %}
+                <div class="matching-wrapper">
+                    {% if question.matching_pairs %}
+                    <div class="matching-pairs">
+                        <div class="matching-column left-column">
+                            {% for pair in question.matching_pairs %}
+                            <div class="matching-item">{{ loop.index }}. {{ pair.left }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="matching-column right-column">
+                            {% for pair in question.matching_pairs %}
+                            <div class="matching-item">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}. {{ pair.right }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="matching-hint">Match items by typing: 1-A, 2-B, 3-C, etc.</div>
+                    <input type="text" class="fill-blank-input" name="q{{ question.id }}"
+                           value="{{ question.student_answer or '' }}"
+                           placeholder="e.g., 1-A, 2-B, 3-C, 4-D"
+                           onblur="saveAnswer({{ question.id }}, this.value)">
+                </div>
+
+                {% elif question.question_type == 'drawing' %}
+                <div class="drawing-wrapper">
+                    {% if question.drawing_template %}
+                    <div class="drawing-instructions">
+                        {{ question.drawing_template.instructions if question.drawing_template.instructions else 'Use the drawing tools below to complete your answer.' }}
+                    </div>
+                    {% endif %}
+                    <div class="drawing-container" id="drawing-container-{{ question.id }}"></div>
+                    <input type="hidden" name="q{{ question.id }}" id="drawing-data-{{ question.id }}"
+                           value="{{ question.student_answer or '' }}">
+                    {% if question.drawing_template and question.drawing_template.type == 'flowchart' %}
+                    <div class="flowchart-legend">
+                        <div class="flowchart-legend-item">
+                            <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="6"/></svg>
+                            <span>Start/End</span>
+                        </div>
+                        <div class="flowchart-legend-item">
+                            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="1"/></svg>
+                            <span>Process</span>
+                        </div>
+                        <div class="flowchart-legend-item">
+                            <svg viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12z"/></svg>
+                            <span>Decision</span>
+                        </div>
+                        <div class="flowchart-legend-item">
+                            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            <span>Arrow/Flow</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% else %}
+                <div class="fill-blank-wrapper">
+                    <input type="text" class="fill-blank-input" name="q{{ question.id }}"
+                           value="{{ question.student_answer or '' }}"
+                           placeholder="Type your answer..."
+                           onblur="saveAnswer({{ question.id }}, this.value)">
+                </div>
+                {% endif %}
+            </div>
+
+            {% if question.hint %}
+            <div class="question-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>{{ question.hint }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="exam-footer">
+        <button type="button" class="btn btn-primary btn-lg" onclick="submitExam()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Submit Exam
+        </button>
+    </div>
+</form>
+
+<!-- Submit Modal -->
+<div class="modal-overlay" id="submit-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Submit Exam?
+        </div>
+        <div class="modal-body">
+            <p><strong>Warning:</strong> You cannot change your answers after submission.</p>
+            <div class="submit-stats" id="submitStats"></div>
+            <div class="confirm-checkbox" style="margin-top: 16px; padding: 12px; background: #FFF4CE; border-radius: 8px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.875rem;">
+                    <input type="checkbox" id="confirmCheck" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>I confirm I want to submit my exam</span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Review Answers</button>
+            <button class="btn btn-primary" onclick="confirmSubmit()" id="confirmBtn" disabled>Submit</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Timer Bar */
+.exam-timer-bar {
+    position: sticky;
+    top: 48px;
+    z-index: 100;
+    background: var(--neutral-white);
+    border-bottom: 1px solid var(--neutral-gray-6);
+    margin: -16px -16px 16px -16px;
+    padding: 0;
+}
+@media (min-width: 768px) {
+    .exam-timer-bar {
+        margin: -20px -20px 20px -20px;
+    }
+}
+.timer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+}
+.timer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.timer-subject {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.timer-title {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+    font-size: 0.875rem;
+}
+.timer-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--azure-lighter-blue);
+    border-radius: 8px;
+    color: var(--azure-blue);
+    font-weight: 700;
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+}
+.timer-display svg {
+    width: 20px;
+    height: 20px;
+}
+.timer-label {
+    font-size: 0.875rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+.timer-display.warning {
+    background: #FFF4CE;
+    color: #835C00;
+}
+.timer-display.danger {
+    background: var(--error-bg);
+    color: var(--error);
+    animation: pulse 1s infinite;
+}
+.timer-display.delayed {
+    background: #FDE7E9;
+    color: #C42B1C;
+}
+.timer-display.delayed::after {
+    content: ' (DELAYED)';
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+.timer-progress {
+    height: 3px;
+    background: var(--neutral-gray-6);
+}
+.timer-progress-bar {
+    height: 100%;
+    background: var(--azure-blue);
+    transition: width 1s linear;
+}
+
+/* Exam Header */
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.exam-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+    margin: 0 0 8px 0;
+}
+.exam-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.exam-subject-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.exam-questions, .exam-marks {
+    font-size: 0.875rem;
+    color: var(--neutral-gray-50);
+}
+.submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+.submit-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Progress */
+.exam-progress {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.progress-text {
+    font-size: 0.875rem;
+    color: var(--neutral-gray-50);
+    margin-bottom: 8px;
+}
+.progress-text strong {
+    color: var(--azure-blue);
+}
+
+/* Question Card */
+.question-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.question-card.answered {
+    border-color: var(--success);
+    border-width: 2px;
+}
+.question-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--neutral-gray-2);
+    border-bottom: 1px solid var(--neutral-gray-6);
+    flex-wrap: wrap;
+}
+.question-number-badge {
+    background: var(--azure-blue);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+.question-type-badge {
+    background: var(--neutral-gray-6);
+    color: var(--neutral-gray-60);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+.question-marks-badge {
+    margin-left: auto;
+    color: var(--neutral-gray-50);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+.question-body {
+    padding: 16px;
+}
+.question-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--neutral-gray-80);
+    margin-bottom: 16px;
+}
+.question-image {
+    margin-bottom: 16px;
+}
+.question-image img {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--neutral-gray-6);
+}
+
+/* MCQ Options */
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--neutral-gray-2);
+    border: 2px solid var(--neutral-gray-6);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.mcq-option:hover {
+    border-color: var(--azure-blue);
+    background: var(--azure-lighter-blue);
+}
+.mcq-option.selected {
+    border-color: var(--azure-blue);
+    background: var(--azure-lighter-blue);
+}
+.mcq-option input {
+    display: none;
+}
+.mcq-radio {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--neutral-gray-20);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.mcq-radio svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    color: var(--azure-blue);
+    transition: opacity 0.15s ease;
+}
+.mcq-option.selected .mcq-radio {
+    border-color: var(--azure-blue);
+}
+.mcq-option.selected .mcq-radio svg {
+    opacity: 1;
+}
+.mcq-text {
+    flex: 1;
+    font-size: 0.9375rem;
+    color: var(--neutral-gray-80);
+}
+
+/* Fill Blank & Written */
+.fill-blank-wrapper, .written-wrapper, .matching-wrapper {
+    margin-top: 8px;
+}
+.fill-blank-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid var(--neutral-gray-20);
+    border-radius: 8px;
+    background: var(--neutral-white);
+    transition: border-color 0.15s ease;
+}
+.fill-blank-input:focus {
+    outline: none;
+    border-color: var(--azure-blue);
+}
+.written-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 2px solid var(--neutral-gray-20);
+    border-radius: 8px;
+    background: var(--neutral-white);
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color 0.15s ease;
+}
+.written-textarea:focus {
+    outline: none;
+    border-color: var(--azure-blue);
+}
+.textarea-hint, .matching-hint {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+    margin-top: 8px;
+}
+.matching-hint {
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+/* Matching Pairs Display */
+.matching-pairs {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: var(--neutral-gray-2);
+    border-radius: 8px;
+}
+.matching-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.matching-item {
+    padding: 10px 14px;
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: 6px;
+    font-size: 0.9375rem;
+}
+.left-column .matching-item {
+    border-left: 3px solid var(--azure-blue);
+}
+.right-column .matching-item {
+    border-left: 3px solid var(--success);
+}
+
+/* Drawing Wrapper */
+.drawing-wrapper {
+    margin-top: 8px;
+}
+
+/* Question Hint */
+.question-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px;
+    background: #FFF4CE;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #835C00;
+}
+.question-hint svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Exam Footer */
+.exam-footer {
+    text-align: center;
+    padding: 24px 0 80px 0;
+}
+.btn-lg {
+    height: 48px;
+    padding: 0 32px;
+    font-size: 1rem;
+    gap: 10px;
+}
+.btn-lg svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Submit Stats */
+.submit-stats {
+    background: var(--neutral-gray-2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+.submit-stats-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+.submit-stats-row:last-child {
+    border-bottom: none;
+}
+.submit-stats-label {
+    color: var(--neutral-gray-50);
+}
+.submit-stats-value {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+}
+.submit-stats-value.warning {
+    color: #835C00;
+}
+.submit-stats-value.success {
+    color: var(--success);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/drawing-canvas.js') }}"></script>
+<script>
+const examId = {{ exam.id }};
+const drawingQuestions = {{ questions | selectattr('question_type', 'equalto', 'drawing') | list | tojson }};
+const totalQuestions = {{ questions|length }};
+
+// Timer configuration - 60 minute window from start
+const SUBMISSION_WINDOW_MINUTES = 60;
+const SUBMISSION_WINDOW_SECONDS = SUBMISSION_WINDOW_MINUTES * 60;
+
+// Calculate elapsed time from server
+{% if exam.started_at and now %}
+const serverElapsedSeconds = {{ (now - exam.started_at).total_seconds()|int }};
+{% else %}
+const serverElapsedSeconds = 0;
+{% endif %}
+
+let elapsedSeconds = Math.max(0, serverElapsedSeconds);
+let timerInterval;
+
+// Initialize timer (counts UP, not down)
+function initTimer() {
+    updateTimerDisplay();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+    elapsedSeconds++;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+    const display = document.getElementById('timerText');
+    const timerDiv = document.getElementById('timerDisplay');
+    const progressBar = document.getElementById('timerProgressBar');
+
+    display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Progress bar shows time used out of 60 min window
+    const percent = Math.min(100, (elapsedSeconds / SUBMISSION_WINDOW_SECONDS) * 100);
+    progressBar.style.width = percent + '%';
+
+    // Status indicators
+    timerDiv.classList.remove('warning', 'danger', 'delayed');
+
+    if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS) {
+        // Past 60 minutes - will be marked as delayed
+        timerDiv.classList.add('delayed');
+        progressBar.style.background = '#D13438';
+    } else if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS - 300) {
+        // Less than 5 minutes left
+        timerDiv.classList.add('danger');
+        progressBar.style.background = '#D13438';
+    } else if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS - 600) {
+        // Less than 10 minutes left
+        timerDiv.classList.add('warning');
+        progressBar.style.background = '#FFB900';
+    } else {
+        progressBar.style.background = 'var(--azure-blue)';
+    }
+}
+
+// MCQ click handling
+document.querySelectorAll('.mcq-option').forEach(option => {
+    option.addEventListener('click', function() {
+        const parent = this.closest('.mcq-options');
+        parent.querySelectorAll('.mcq-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+
+        const radio = this.querySelector('input[type="radio"]');
+        radio.checked = true;
+        saveAnswer(parseInt(this.closest('.question-card').dataset.questionId), radio.value);
+        updateProgress();
+    });
+});
+
+// Auto-save
+async function saveAnswer(questionId, answer) {
+    try {
+        await fetch(`/student/exam/${examId}/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question_id: questionId, answer: answer })
+        });
+
+        // Mark card as answered
+        const card = document.getElementById('question-' + questionId);
+        if (answer && answer.trim()) {
+            card.classList.add('answered');
+        } else {
+            card.classList.remove('answered');
+        }
+        updateProgress();
+    } catch (error) {
+        console.error('Auto-save failed:', error);
+    }
+}
+
+// Update progress
+function updateProgress() {
+    let answered = 0;
+    document.querySelectorAll('.question-card').forEach(card => {
+        const radio = card.querySelector('input[type="radio"]:checked');
+        const text = card.querySelector('input[type="text"]:not([type="hidden"]), textarea');
+        const drawingData = card.querySelector('input[id^="drawing-data-"]');
+
+        if (radio || (text && text.value.trim()) || (drawingData && drawingData.value && drawingData.value.startsWith('data:image'))) {
+            answered++;
+        }
+    });
+
+    document.getElementById('answeredCount').textContent = answered;
+    document.getElementById('progressBar').style.width = (answered / totalQuestions * 100) + '%';
+
+    return answered;
+}
+
+// Submit exam
+function submitExam() {
+    const answered = updateProgress();
+    const unanswered = totalQuestions - answered;
+
+    let statsHtml = `
+        <div class="submit-stats-row">
+            <span class="submit-stats-label">Total Questions</span>
+            <span class="submit-stats-value">${totalQuestions}</span>
+        </div>
+        <div class="submit-stats-row">
+            <span class="submit-stats-label">Answered</span>
+            <span class="submit-stats-value success">${answered}</span>
+        </div>
+    `;
+
+    if (unanswered > 0) {
+        statsHtml += `
+            <div class="submit-stats-row">
+                <span class="submit-stats-label">Unanswered</span>
+                <span class="submit-stats-value warning">${unanswered}</span>
+            </div>
+        `;
+    }
+
+    document.getElementById('submitStats').innerHTML = statsHtml;
+    document.getElementById('submit-modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('submit-modal').classList.remove('active');
+    // Reset checkbox and button state
+    document.getElementById('confirmCheck').checked = false;
+    document.getElementById('confirmBtn').disabled = true;
+}
+
+// Enable submit button only when checkbox is checked
+document.getElementById('confirmCheck').addEventListener('change', function() {
+    document.getElementById('confirmBtn').disabled = !this.checked;
+});
+
+async function confirmSubmit() {
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const answers = [];
+    document.querySelectorAll('.question-card').forEach(card => {
+        const qId = card.dataset.questionId;
+        let answer = '';
+
+        const radio = card.querySelector('input[type="radio"]:checked');
+        const drawingData = card.querySelector('input[id^="drawing-data-"]');
+
+        if (radio) {
+            answer = radio.value;
+        } else if (drawingData && drawingData.value && drawingData.value.startsWith('data:image')) {
+            answer = drawingData.value;
+        } else {
+            const text = card.querySelector('input[type="text"]:not([type="hidden"]), textarea');
+            if (text) answer = text.value.trim();
+        }
+
+        answers.push({ question_id: parseInt(qId), answer: answer });
+    });
+
+    try {
+        const response = await fetch(`/student/exam/${examId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            clearInterval(timerInterval);
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+            showToast('Exam submitted successfully!', 'success');
+            setTimeout(() => window.location.href = '/student', 1500);
+        } else {
+            showToast(data.error || 'Submission failed', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Submit';
+        }
+    } catch (error) {
+        showToast('Error submitting exam', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+    }
+
+    closeModal();
+}
+
+// Warn before leaving
+function beforeUnloadHandler(e) {
+    e.preventDefault();
+    e.returnValue = '';
+}
+window.addEventListener('beforeunload', beforeUnloadHandler);
+
+// Initialize drawing canvases
+const drawingCanvases = {};
+
+function initDrawingCanvases() {
+    drawingQuestions.forEach(question => {
+        const containerId = `drawing-container-${question.id}`;
+        const container = document.getElementById(containerId);
+
+        if (container && typeof DrawingCanvas !== 'undefined') {
+            // Get available width
+            const availableWidth = container.offsetWidth || window.innerWidth - 60;
+
+            // Responsive canvas sizing based on screen orientation
+            let canvasWidth, canvasHeight;
+
+            if (window.innerWidth >= 768) {
+                // Desktop/Landscape - wide canvas
+                canvasWidth = Math.min(availableWidth, 800);
+                canvasHeight = Math.floor(canvasWidth * 0.75); // 4:3 aspect ratio
+            } else {
+                // Mobile/Portrait - tall canvas
+                canvasWidth = Math.min(availableWidth, 500);
+                canvasHeight = Math.floor(canvasWidth * 1.4); // Portrait aspect ratio
+            }
+
+            // Ensure minimum sizes
+            canvasWidth = Math.max(canvasWidth, 320);
+            canvasHeight = Math.max(canvasHeight, 450);
+
+            drawingCanvases[question.id] = new DrawingCanvas(containerId, {
+                width: canvasWidth,
+                height: canvasHeight,
+                questionId: question.id,
+                type: question.drawing_template?.type || 'freehand',
+                onSave: function(qId, imageData) {
+                    const hiddenInput = document.getElementById(`drawing-data-${qId}`);
+                    if (hiddenInput) {
+                        hiddenInput.value = imageData;
+                    }
+                    saveAnswer(qId, imageData);
+                }
+            });
+
+            // Load existing drawing if present
+            const existingData = document.getElementById(`drawing-data-${question.id}`)?.value;
+            if (existingData && existingData.startsWith('data:image')) {
+                const canvas = drawingCanvases[question.id];
+                if (canvas && canvas.setBackgroundImage) {
+                    // Small delay to ensure canvas is ready
+                    setTimeout(() => canvas.loadState(existingData), 100);
+                }
+            }
+        }
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initTimer();
+    updateProgress();
+
+    // Initialize drawing canvases
+    initDrawingCanvases();
+
+    // Add blur handlers for text inputs
+    document.querySelectorAll('.fill-blank-input, .written-textarea').forEach(input => {
+        input.addEventListener('blur', function() {
+            const card = this.closest('.question-card');
+            const qId = card.dataset.questionId;
+            saveAnswer(parseInt(qId), this.value);
+        });
+    });
+});
+</script>
+{% endblock %}

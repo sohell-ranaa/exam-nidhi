@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & FAQ - Y6 Practice Exam</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230078D4' rx='12' width='100' height='100'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='50' fill='white' font-family='system-ui'>Y6</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0078D4;
+            --primary-dark: #106EBE;
+            --primary-light: #DEECF9;
+            --success: #107C10;
+            --warning: #FFB900;
+            --danger: #D13438;
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #EEEEEE;
+            --gray-500: #9E9E9E;
+            --gray-700: #616161;
+            --gray-900: #212121;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            min-height: 100vh;
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-text span { color: var(--primary); }
+
+        .back-btn {
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--gray-700);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            font-size: 1.125rem;
+            color: var(--gray-500);
+        }
+
+        .section {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1.25rem 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .faq-answer {
+            color: var(--gray-700);
+            font-size: 0.9375rem;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--gray-900);
+        }
+
+        .tip-box {
+            background: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-box strong {
+            color: var(--primary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feature-card {
+            background: var(--gray-50);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .feature-card h4 {
+            font-weight: 600;
+            margin-top: 0.75rem;
+            color: var(--gray-900);
+        }
+
+        .feature-card p {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-size: 1.5rem;
+        }
+
+        .contact-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .contact-box h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-box p {
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .contact-box a {
+            color: white;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.75rem; }
+            .section { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">
+            <div class="logo-icon">Y6</div>
+            <div class="logo-text">Practice<span>Exam</span></div>
+        </a>
+        <a href="/auth/login" class="back-btn">Back to Login</a>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Help & FAQ</h1>
+            <p>Everything you need to know about using the Y6 Practice Exam System</p>
+        </div>
+
+        <div class="section">
+            <h2>Getting Started</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Login to Your Account</h4>
+                        <p>Use your email and password provided by your teacher or administrator to login. If you received an email with a magic link, simply click the link to login automatically.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>View Your Dashboard</h4>
+                        <p>Once logged in, you'll see your dashboard with pending exams, completed exams, and your overall performance statistics.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Start an Exam</h4>
+                        <p>Click on any pending exam to start. Read each question carefully and select or type your answer. Your progress is saved automatically.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Submit and Wait for Results</h4>
+                        <p>When you're done, click Submit. Multiple choice questions are graded automatically. Written answers will be reviewed by your teacher.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Question Types</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">A</div>
+                    <h4>Multiple Choice</h4>
+                    <p>Select the correct answer from the given options</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">...</div>
+                    <h4>Fill in the Blank</h4>
+                    <p>Type the missing word or phrase</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">T</div>
+                    <h4>Written Answer</h4>
+                    <p>Write a detailed response to the question</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">=</div>
+                    <h4>Matching</h4>
+                    <p>Match items from one column to another</p>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>Tip:</strong> Multiple choice and fill-in-the-blank questions are graded automatically. Written answers are reviewed manually by your teacher and may take longer to receive results.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">What subjects are covered?</div>
+                <div class="faq-answer">The Y6 Practice Exam system covers four subjects: English, Mathematics, ICT (Information and Communication Technology), and Science. All content follows the Cambridge curriculum standards.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How are exams graded?</div>
+                <div class="faq-answer">Multiple choice and fill-in-the-blank questions are graded automatically. Written answers require manual review by your teacher. You'll receive your results once all questions have been graded and your teacher releases the results.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I save my progress and continue later?</div>
+                <div class="faq-answer">Yes! Your answers are automatically saved as you type. If you need to leave and come back, your progress will be waiting for you. However, once you submit an exam, you cannot make changes.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How do I view my results?</div>
+                <div class="faq-answer">Once your teacher releases the results, you can view them from your dashboard. Click on any completed exam to see your score, correct answers, and any feedback from your teacher.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What if I forgot my password?</div>
+                <div class="faq-answer">Please contact your teacher or school administrator to reset your password. They can provide you with a new login or send you a magic link to access your account.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I see the correct answers after submitting?</div>
+                <div class="faq-answer">Yes, but only after your teacher releases the results. This allows you to learn from your mistakes and understand the correct solutions.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What happens if my internet disconnects during an exam?</div>
+                <div class="faq-answer">Don't worry! Your answers are saved automatically. Simply log back in and continue from where you left off. Your progress is preserved.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How long do I have to complete an exam?</div>
+                <div class="faq-answer">The time limit depends on each exam. You can see the duration when you start the exam. If there's a deadline, make sure to submit before it passes.</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>For Parents</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">How can I track my child's progress?</div>
+                <div class="faq-answer">Contact your child's teacher to receive regular progress updates. Teachers can provide reports on exam scores, areas of strength, and areas that need improvement.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Is the system safe for children?</div>
+                <div class="faq-answer">Yes, the Y6 Practice Exam system is designed specifically for Year 6 students. There is no social interaction features, and all content is educational and age-appropriate.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I help my child during exams?</div>
+                <div class="faq-answer">While you can help your child understand how to use the system, we recommend letting them complete exams independently. This helps teachers accurately assess their understanding and provide appropriate support.</div>
+            </div>
+        </div>
+
+        <div class="contact-box">
+            <h3>Need More Help?</h3>
+            <p>If you have questions that aren't answered here, please contact your teacher or school administrator.</p>
+            <p><a href="/">Spring Gate Private School, Selangor, Malaysia</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Y6 Practice Exam System. Spring Gate Private School, Selangor, Malaysia.</p>
+    </footer>
+</body>
+</html>

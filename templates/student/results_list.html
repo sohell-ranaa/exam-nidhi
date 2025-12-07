@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}My Results - {{ app_name }}{% endblock %}
+
+{% set active_page = 'results' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">My Results</h1>
+<p class="page-subtitle">View your exam scores and review answers</p>
+
+<!-- Subject Filter -->
+<div class="filter-bar">
+    <a href="{{ url_for('student.results') }}" class="filter-chip {% if not current_subject %}active{% endif %}">All</a>
+    {% for s in subjects %}
+    <a href="{{ url_for('student.results', subject=s.code) }}" class="filter-chip subject-{{ s.code|lower }} {% if current_subject == s.code %}active{% endif %}">{{ s.name }}</a>
+    {% endfor %}
+</div>
+
+<!-- Results List -->
+<div class="results-grid">
+    {% if exams %}
+    {% for exam in exams %}
+    <a href="{{ url_for('student.view_results', exam_id=exam.id) }}" class="result-card">
+        <div class="result-header">
+            <div class="result-subject subject-{{ exam.subject_code|lower }}">{{ exam.subject_name }}</div>
+            <div class="result-date">{{ exam.released_at_formatted }}</div>
+        </div>
+        <div class="result-title">{{ exam.exam_title }}</div>
+        <div class="result-score-section">
+            <div class="result-score {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}">
+                {{ "%.0f"|format(exam.percentage or 0) }}%
+            </div>
+            <div class="result-marks">{{ exam.total_score or 0 }} / {{ exam.max_score }} marks</div>
+        </div>
+        <div class="result-action">
+            <span>View Details</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state full-width">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <p>No results available yet</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+.filter-chip {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--neutral-gray-60);
+    background: var(--neutral-gray-4);
+    transition: all 0.15s ease;
+}
+.filter-chip:hover {
+    background: var(--neutral-gray-6);
+}
+.filter-chip.active {
+    background: var(--azure-blue);
+    color: white;
+}
+.results-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+    .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (min-width: 1024px) {
+    .results-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+.result-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1.25rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.15s ease;
+}
+.result-card:hover {
+    border-color: var(--azure-blue);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.result-subject {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+.result-date {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+}
+.result-title {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+.result-score-section {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.result-score {
+    font-size: 2rem;
+    font-weight: 700;
+}
+.result-marks {
+    font-size: 0.875rem;
+    color: var(--neutral-gray-50);
+}
+.result-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--azure-blue);
+    font-weight: 500;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--neutral-gray-6);
+}
+.result-action svg {
+    width: 16px;
+    height: 16px;
+}
+.score-excellent { color: #107C10; }
+.score-good { color: var(--azure-blue); }
+.score-average { color: #835C00; }
+.score-poor { color: var(--error); }
+.full-width {
+    grid-column: 1 / -1;
+}
+</style>
+{% endblock %}

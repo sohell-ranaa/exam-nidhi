@@ -1,0 +1,7 @@
+y daughter reads in year 6 cambridge medium. i want to develop a project for her where she will get practice exam daily for english, math, ICT, science subject. her school name is Spring Gate Private School, Selangor, Malaysia
+From admin i will create an account for her and just select subject and date (auto select) and ask to generate a practice question for exam. I will give practice for her. the system will generate automatically from admin panel. she will attempt practice question and write answer. most of them will be MCQ and written, matching. you will see in the example that i uploaded as image.
+to generate exam paper if it is necessary you also insert db record of about 50 set on each subject with answer. i want her to attmpt first and then when i release answer she will be aable to see and get a mark automatically. answer will be visible on her panel along with exam.
+
+use mysql db which was connected in ssh-guardia v3 project(dbx/connection.py). creata a separat db and you do the schema. you can use python flast and redis. redis installed on this machine.
+
+theme will be like azue white mode. clean check 

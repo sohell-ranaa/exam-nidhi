@@ -1,0 +1,31 @@
+{# Question Set Card Component #}
+{# Usage: {% include 'components/question_set_card.html' %} #}
+{# Required: qs (question set object), current_subject #}
+
+<div class="set-card" onclick="window.location='?subject={{ current_subject.code }}&set={{ qs.id }}'">
+    <div class="set-card-header">
+        <span class="set-number">Set {{ qs.id }}</span>
+        <span class="set-marks">{{ qs.total_marks }} marks</span>
+    </div>
+    <h3 class="set-title">{{ qs.title }}</h3>
+    <div class="set-meta">
+        <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            {{ qs.question_count }} questions
+        </span>
+        <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+            {{ qs.duration_minutes }} min
+        </span>
+    </div>
+    <div class="set-actions">
+        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.location='?subject={{ current_subject.code }}&set={{ qs.id }}'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            View
+        </button>
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); window.open('/questions/print/{{ qs.id }}', '_blank')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+        </button>
+    </div>
+</div>

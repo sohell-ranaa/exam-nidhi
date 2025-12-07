@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question_set.title }} - Preview</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230078D4' rx='12' width='100' height='100'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='50' fill='white' font-family='system-ui'>Y6</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0078D4;
+            --success: #107C10;
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #EEEEEE;
+            --gray-500: #9E9E9E;
+            --gray-700: #616161;
+            --gray-900: #212121;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            color: var(--gray-900);
+        }
+
+        .header-meta {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .exam-header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .exam-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .exam-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .question-header {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .question-num {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .question-type {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: #E8F4FD;
+            color: var(--primary);
+            border-radius: 999px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .question-marks {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .question-body {
+            padding: 1.5rem;
+        }
+
+        .question-text {
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.7;
+        }
+
+        .question-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .answer-box {
+            padding: 1rem;
+            background: #DFF6DD;
+            border-radius: 8px;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        @media print {
+            .header { display: none; }
+            .btn { display: none; }
+            .container { max-width: 100%; margin: 0; }
+            .question-card { page-break-inside: avoid; }
+            .print-only { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div>
+            <h1>{{ question_set.title }}</h1>
+            <div class="header-meta">{{ question_set.subject_name }} | {{ questions|length }} questions | {{ question_set.total_marks }} marks</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="window.print()">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print
+            </button>
+            <a href="/questions/export/pdf/{{ question_set.id }}" class="btn btn-primary">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download PDF
+            </a>
+            <a href="/questions/bank?subject={{ question_set.subject_code }}" class="btn btn-secondary">Close</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="exam-header print-only">
+            <div class="exam-title">{{ question_set.title }}</div>
+            <div class="exam-info">
+                <span>{{ question_set.subject_name }}</span>
+                <span>{{ question_set.total_marks }} marks</span>
+                <span>{{ question_set.duration_minutes }} minutes</span>
+            </div>
+        </div>
+
+        {% for q in questions %}
+        <div class="question-card">
+            <div class="question-header">
+                <div>
+                    <span class="question-num">Question {{ q.question_number }}</span>
+                    <span class="question-type">{{ q.question_type|replace('_', ' ') }}</span>
+                </div>
+                <span class="question-marks">{{ q.marks }} mark{% if q.marks > 1 %}s{% endif %}</span>
+            </div>
+            <div class="question-body">
+                <div class="question-text">{{ q.question_text }}</div>
+
+                {% if q.image_url %}
+                <img src="{{ q.image_url }}" alt="Question image" class="question-image">
+                {% endif %}
+
+                {% if q.question_type == 'mcq' and q.options %}
+                <div class="options">
+                    {% for opt in q.options %}
+                    <div class="option">
+                        <span class="option-letter">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}</span>
+                        <span>{{ opt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif q.question_type == 'fill_blank' %}
+                <div style="padding: 1rem; border: 2px dashed #ddd; border-radius: 8px; color: #999;">
+                    Write your answer here...
+                </div>
+                {% elif q.question_type == 'written' %}
+                <div style="border: 1px solid #ddd; border-radius: 8px; min-height: 100px;"></div>
+                {% endif %}
+
+                {% if q.hint %}
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #FFF4CE; border-radius: 6px; font-size: 0.875rem; color: #8A6914;">
+                    <strong>Hint:</strong> {{ q.hint }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div style="text-align: center; padding: 2rem; color: #999;">
+            End of Questions
+        </div>
+    </div>
+</body>
+</html>

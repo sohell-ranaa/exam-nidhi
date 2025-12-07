@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Exam History - {{ app_name }}{% endblock %}
+
+{% set active_page = 'history' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Exam History</h1>
+<p class="page-subtitle">All your practice exams</p>
+
+<div class="card">
+    {% if exams %}
+    <div>
+        {% for exam in exams %}
+        <a href="{% if exam.status == 'released' %}{{ url_for('student.view_results', exam_id=exam.id) }}{% elif exam.status in ('pending', 'in_progress') %}{{ url_for('student.take_exam', exam_id=exam.id) }}{% else %}#{% endif %}"
+           class="list-item" style="text-decoration: none; color: inherit;">
+            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+                {{ exam.subject_name[0] }}
+            </div>
+            <div class="list-item-content">
+                <div class="list-item-title">{{ exam.exam_title }}</div>
+                <div class="list-item-subtitle">
+                    {{ exam.subject_name }} - {{ exam.exam_date }}
+                    {% if exam.submitted_at %} - Submitted: {{ exam.submitted_at }}{% endif %}
+                </div>
+            </div>
+            <div class="list-item-action">
+                {% if exam.status == 'released' %}
+                <span style="font-weight: 600; {% if exam.percentage >= 60 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                    {{ "%.0f"|format(exam.percentage or 0) }}%
+                </span>
+                {% else %}
+                <span class="badge badge-{{ exam.status }}">{{ exam.status|title }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>No exams yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

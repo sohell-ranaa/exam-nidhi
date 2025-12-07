@@ -1,0 +1,287 @@
+/* Drawing Canvas Styles - Touch-Friendly */
+
+.drawing-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    min-height: 550px;
+    /* Prevent touch events from bubbling up and causing accidental submits */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.drawing-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.drawing-canvas {
+    border: 2px solid #333;
+    border-radius: 4px;
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Toolbar Styles */
+.drawing-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 0 10px;
+    border-right: 1px solid #dee2e6;
+}
+
+.toolbar-section:last-child {
+    border-right: none;
+}
+
+/* Tool Buttons */
+.tool-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.tool-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.tool-btn.active {
+    background: #0078D4;
+    border-color: #0078D4;
+    color: white;
+}
+
+.tool-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Color Buttons */
+.colors-section {
+    padding: 0 15px !important;
+}
+
+.color-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px #dee2e6;
+    transition: transform 0.2s ease;
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.active {
+    box-shadow: 0 0 0 3px #0078D4;
+}
+
+/* Stroke Slider */
+.stroke-label {
+    font-size: 12px;
+    color: #666;
+    margin-right: 5px;
+}
+
+.stroke-slider {
+    width: 80px;
+    height: 8px;
+    -webkit-appearance: none;
+    background: #dee2e6;
+    border-radius: 4px;
+    outline: none;
+}
+
+.stroke-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #0078D4;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.stroke-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #0078D4;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* Action Buttons */
+.action-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.action-btn:hover {
+    background: #e9ecef;
+}
+
+.action-btn.danger:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* Drawing Instructions */
+.drawing-instructions {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #e7f3ff;
+    border-radius: 4px;
+    border-left: 4px solid #0078D4;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .drawing-toolbar {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .toolbar-section {
+        padding: 0 5px;
+        flex-wrap: wrap;
+    }
+
+    .tool-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .color-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .stroke-slider {
+        width: 60px;
+    }
+
+    .drawing-canvas {
+        max-width: 100%;
+    }
+
+    /* Stack toolbar sections on very small screens */
+    .drawing-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbar-section {
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 8px 0;
+        justify-content: center;
+    }
+
+    .toolbar-section:last-child {
+        border-bottom: none;
+    }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+    .tool-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+    .color-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .action-btn {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+/* Print Styles - Hide drawing canvas in print, show as image */
+@media print {
+    .drawing-toolbar {
+        display: none !important;
+    }
+
+    .drawing-container {
+        border: 1px solid #000;
+        padding: 5px;
+    }
+}
+
+/* Flowchart Help Overlay */
+.flowchart-legend {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 12px;
+    flex-wrap: wrap;
+}
+
+.flowchart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flowchart-legend-item svg {
+    width: 24px;
+    height: 24px;
+    stroke: #333;
+    fill: none;
+}
+
+.flowchart-legend-item span {
+    color: #666;
+}

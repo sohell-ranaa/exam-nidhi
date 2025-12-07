@@ -1,0 +1,142 @@
+{# Print Exam Header Component - Spring Gate Format #}
+{# Usage: {% include 'components/print_header.html' %} #}
+{# Required: question_set (object), school_name (string, optional) #}
+
+<div class="exam-cover">
+    <!-- Top Header with Logo and Student Info -->
+    <div class="cover-header">
+        <div class="logo-section">
+            <div class="school-logo">
+                <img src="{{ url_for('static', filename='images/school-logo.png') }}" alt="Spring Gate" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="logo-placeholder" style="display:none;">
+                    <span>SpringGate</span>
+                    <small>PRIVATE SCHOOL</small>
+                </div>
+            </div>
+        </div>
+        <div class="student-fields">
+            <div class="field-row">
+                <label>Candidate Name</label>
+                <span class="field-separator">:</span>
+                <div class="field-box"></div>
+            </div>
+            <div class="field-row">
+                <label>Year Group</label>
+                <span class="field-separator">:</span>
+                <div class="field-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject and Term Info -->
+    <div class="subject-row">
+        <div class="subject-info">
+            <div class="subject-name">{{ question_set.subject_name }}</div>
+            <div class="paper-name">Paper {{ question_set.paper_number|default(1) }}</div>
+        </div>
+        <div class="term-info">
+            <div class="term-name">Term Examination</div>
+            <div class="duration">{{ question_set.duration_minutes }} Minutes</div>
+        </div>
+    </div>
+
+    <!-- Answer Instructions -->
+    <div class="answer-note">
+        You must answer on the Question Paper.
+    </div>
+
+    {% if question_set.subject_code == 'MAT' %}
+    <div class="materials-note">
+        Additional materials: Pencil<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eraser<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ruler
+    </div>
+    {% else %}
+    <div class="materials-note">
+        No additional materials are needed.
+    </div>
+    {% endif %}
+
+    <!-- Instructions and Examiner Table Side by Side -->
+    <div class="instructions-examiner-row">
+        <div class="instructions-section">
+            <div class="section-heading">INSTRUCTIONS</div>
+            <ul class="instruction-list">
+                <li>Answer <strong>all</strong> questions.</li>
+                <li>Use a pencil.</li>
+                <li>Write your <strong>candidate name</strong> and <strong>year group</strong> in the boxes at the top of the page.</li>
+                <li>Write your answer to each question in the space provided.</li>
+                <li>Do <strong>not</strong> use an erasable pen or correction fluid.</li>
+                {% if question_set.subject_code == 'ENG' %}
+                <li>Do <strong>not</strong> write on any bar codes.</li>
+                <li>Dictionaries are <strong>not</strong> allowed.</li>
+                {% endif %}
+            </ul>
+
+            <div class="section-heading">INFORMATION</div>
+            <ul class="instruction-list">
+                <li>The total mark for this paper is {{ question_set.total_marks }}.</li>
+                <li>The number of marks for each question or part question is shown in brackets [ ].</li>
+                {% if question_set.subject_code == 'ENG' %}
+                <li>The insert contains the reading passage.</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="examiner-table">
+            <table class="marks-table">
+                <thead>
+                    <tr>
+                        <th colspan="2">For Examiner's Use</th>
+                    </tr>
+                    <tr>
+                        <th>Page</th>
+                        <th>Mark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(2, 10) %}
+                    <tr>
+                        <td>{{ i }}</td>
+                        <td></td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Footer with Signatures -->
+    <div class="cover-footer">
+        <table class="approval-table">
+            <tr>
+                <td class="label-cell">Prepared by:</td>
+                <td class="name-cell"></td>
+                <td class="signature-cell" rowspan="3">
+                    <div class="parent-signature">
+                        <span>Parent's Signature</span>
+                        <div class="signature-line"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="label-cell">Checked by:</td>
+                <td class="name-cell"></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Approved by:</td>
+                <td class="name-cell"></td>
+            </tr>
+        </table>
+
+        <div class="document-info">
+            <span class="page-count">This document has <strong>{{ ((questions|length) // 3) + 2 }}</strong> printed pages. Any blank pages are indicated.</span>
+            <span class="doc-code">SG/2026/T1/Y6/{{ question_set.subject_code }}/P1/TB</span>
+            <span class="turn-over">[TURN OVER</span>
+        </div>
+    </div>
+</div>

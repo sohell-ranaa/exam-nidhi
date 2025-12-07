@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Expired - Y6 Practice Exam</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #FAF9F8 0%, #F3F2F1 100%);
+        }
+        .container {
+            text-align: center;
+            padding: 3rem 2rem;
+            max-width: 400px;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: #FDE7E9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .icon svg {
+            width: 40px;
+            height: 40px;
+            color: #D13438;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #323130;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            color: #605E5C;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: #0078D4;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #106EBE;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <h1>Link Expired or Invalid</h1>
+        <p>This magic link has expired, already been used, or is invalid. Magic links are valid for 72 hours and can only be used once.</p>
+        <a href="/auth/login" class="btn">Go to Login</a>
+    </div>
+</body>
+</html>

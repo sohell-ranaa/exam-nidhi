@@ -1,0 +1,45 @@
+{# Question Item Component #}
+{# Usage: {% include 'components/question_item.html' %} #}
+{# Required: q (question object with question_number, question_type, question_text, marks, options, correct_answer, image_url) #}
+
+<div class="question-item">
+    <div class="question-header">
+        <span class="question-number">Q{{ q.question_number }}</span>
+        <span class="question-type type-{{ q.question_type }}">{{ q.question_type|replace('_', ' ')|title }}</span>
+        <span class="question-marks">{{ q.marks }} mark{% if q.marks > 1 %}s{% endif %}</span>
+    </div>
+    <div class="question-body">
+        <p class="question-text">{{ q.question_text }}</p>
+
+        {% if q.image_url %}
+        <img src="{{ q.image_url }}" alt="Question image" class="question-image">
+        {% endif %}
+
+        {% if q.question_type == 'mcq' and q.options %}
+        <div class="options-grid">
+            {% for opt in q.options %}
+            <div class="option {% if opt == q.correct_answer %}correct{% endif %}">
+                <span class="option-letter">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}</span>
+                <span class="option-text">{{ opt }}</span>
+                {% if opt == q.correct_answer %}
+                <svg class="correct-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif q.question_type == 'fill_blank' %}
+        <div class="answer-display">
+            <strong>Answer:</strong> {{ q.correct_answer }}
+        </div>
+        {% elif q.question_type == 'written' %}
+        <div class="answer-display written">
+            <strong>Expected Answer:</strong>
+            <p>{{ q.correct_answer }}</p>
+        </div>
+        {% else %}
+        <div class="answer-display">
+            <strong>Answer:</strong> {{ q.correct_answer }}
+        </div>
+        {% endif %}
+    </div>
+</div>

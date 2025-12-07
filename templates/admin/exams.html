@@ -1,0 +1,1081 @@
+{% extends "base.html" %}
+
+{% block title %}Exams - {{ app_name }}{% endblock %}
+
+{% set active_page = 'exams' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Critical CSS - prevents FOUC */
+.page-content { opacity: 0; transition: opacity 0.2s ease; }
+.page-content.loaded { opacity: 1; }
+
+/* Exams Page Styles */
+.exams-header { margin-bottom: 24px; }
+.exams-header-content { display: flex; flex-direction: column; gap: 4px; }
+.exams-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.75rem; font-weight: 600; color: var(--neutral-gray-80); margin: 0;
+}
+.exams-icon { width: 32px; height: 32px; color: var(--azure-blue); }
+.exams-subtitle { color: var(--neutral-gray-50); font-size: 0.875rem; margin: 0; }
+
+/* Stats Cards */
+.exam-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+@media (min-width: 768px) { .exam-stats { grid-template-columns: repeat(4, 1fr); } }
+.exam-stat-card {
+    background: var(--neutral-white); border: 1px solid var(--neutral-gray-6);
+    border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.exam-stat-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+}
+.exam-stat-icon svg { width: 20px; height: 20px; }
+.pending-icon { background: #FFF4CE; color: #835C00; }
+.progress-icon { background: #DEECF9; color: #0078D4; }
+.grading-icon { background: #E0F7FA; color: #00838F; }
+.completed-icon { background: #DFF6DD; color: #107C10; }
+.exam-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--neutral-gray-80); line-height: 1; }
+.exam-stat-label { font-size: 0.75rem; color: var(--neutral-gray-50); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+/* Main Grid */
+.exams-grid { display: grid; gap: 24px; }
+@media (min-width: 1024px) { .exams-grid { grid-template-columns: 400px 1fr; } }
+
+/* Assign Card */
+.assign-card {
+    background: var(--neutral-white); border: 1px solid var(--neutral-gray-6);
+    border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;
+}
+.assign-card-header {
+    background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+    color: white; padding: 16px 20px; display: flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 1rem;
+}
+.assign-card-header svg { width: 20px; height: 20px; }
+.assign-card-body { padding: 20px; }
+
+/* Form Fields */
+.form-field { margin-bottom: 20px; }
+.field-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.875rem; font-weight: 600; color: var(--neutral-gray-80); margin-bottom: 8px;
+}
+.field-label svg { width: 16px; height: 16px; color: var(--neutral-gray-40); }
+
+/* Subject Tabs */
+.subject-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.subject-tab {
+    padding: 8px 16px; font-size: 0.8125rem; font-weight: 500;
+    font-family: var(--font-family); border: 1px solid var(--neutral-gray-20);
+    border-radius: 20px; background: var(--neutral-white); color: var(--neutral-gray-50);
+    cursor: pointer; transition: all 0.15s ease;
+}
+.subject-tab:hover { background: var(--neutral-gray-4); border-color: var(--neutral-gray-30); }
+.subject-tab.active { background: var(--azure-blue); color: white; border-color: var(--azure-blue); }
+
+/* Question Set Preview */
+.question-set-preview {
+    margin-top: 8px; padding: 10px 12px; background: var(--azure-lighter-blue);
+    border-radius: 6px; display: flex; gap: 16px; font-size: 0.8125rem; color: var(--azure-blue);
+}
+
+/* Assign Button */
+.assign-btn {
+    width: 100%; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%); color: white; border: none;
+    border-radius: 8px; font-size: 0.9375rem; font-weight: 600; font-family: var(--font-family);
+    cursor: pointer; transition: all 0.15s ease; margin-top: 24px;
+}
+.assign-btn:hover { background: linear-gradient(135deg, #106EBE 0%, #005A9E 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,120,212,0.3); }
+.assign-btn:active { transform: translateY(0); }
+.assign-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.assign-btn svg { width: 18px; height: 18px; }
+
+/* Assigned Card */
+.assigned-card {
+    background: var(--neutral-white); border: 1px solid var(--neutral-gray-6);
+    border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;
+    display: flex; flex-direction: column;
+}
+.assigned-card-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--neutral-gray-6);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.assigned-title { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--neutral-gray-80); }
+.assigned-title svg { width: 20px; height: 20px; color: var(--neutral-gray-40); }
+.assigned-count { font-size: 0.8125rem; color: var(--neutral-gray-50); background: var(--neutral-gray-4); padding: 4px 10px; border-radius: 12px; }
+
+/* Filter Section */
+.filter-section { padding: 16px 20px; border-bottom: 1px solid var(--neutral-gray-6); background: var(--neutral-gray-2); }
+.filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.filter-row:last-child { margin-bottom: 0; }
+@media (min-width: 768px) { .filter-row { grid-template-columns: repeat(4, 1fr); } }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 0.75rem; font-weight: 600; color: var(--neutral-gray-50); text-transform: uppercase; letter-spacing: 0.3px; }
+.filter-input {
+    height: 36px; padding: 0 10px; font-size: 0.8125rem; font-family: var(--font-family);
+    border: 1px solid var(--neutral-gray-20); border-radius: 6px; background: var(--neutral-white);
+}
+.filter-input:focus { outline: none; border-color: var(--azure-blue); box-shadow: 0 0 0 2px rgba(0,120,212,0.15); }
+.filter-actions { display: flex; gap: 8px; align-items: flex-end; }
+.filter-btn {
+    height: 36px; padding: 0 16px; font-size: 0.8125rem; font-weight: 600;
+    border-radius: 6px; cursor: pointer; transition: all 0.15s ease;
+}
+.filter-btn-primary { background: var(--azure-blue); color: white; border: none; }
+.filter-btn-primary:hover { background: var(--azure-blue-hover); }
+.filter-btn-secondary { background: var(--neutral-white); color: var(--neutral-gray-60); border: 1px solid var(--neutral-gray-20); }
+.filter-btn-secondary:hover { background: var(--neutral-gray-4); }
+
+/* Exam List */
+.assigned-card-body { flex: 1; max-height: 500px; overflow-y: auto; }
+.exam-list { padding: 8px 0; }
+.exam-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+    border-bottom: 1px solid var(--neutral-gray-6); transition: background 0.1s; cursor: pointer;
+}
+.exam-item:last-child { border-bottom: none; }
+.exam-item:hover { background: var(--neutral-gray-2); }
+.exam-item-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.exam-item-content { flex: 1; min-width: 0; }
+.exam-item-title { font-weight: 600; color: var(--neutral-gray-80); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exam-item-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--neutral-gray-50); margin-top: 2px; }
+.meta-dot { width: 3px; height: 3px; background: var(--neutral-gray-30); border-radius: 50%; }
+
+/* Status Badges */
+.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+.status-pending { background: #FFF4CE; color: #835C00; }
+.status-scheduled { background: #E8F4FD; color: #0078D4; }
+.status-soon { background: #FFF0E5; color: #D83B01; animation: pulse-soon 2s infinite; }
+@keyframes pulse-soon { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+.status-in_progress { background: #DEECF9; color: #0078D4; }
+.status-submitted { background: #E0F7FA; color: #00838F; }
+.status-grading { background: #EDE7F6; color: #7B1FA2; }
+.status-released { background: #DFF6DD; color: #107C10; }
+
+/* Empty State */
+.empty-exams { padding: 48px 24px; text-align: center; }
+.empty-exams svg { width: 48px; height: 48px; color: var(--neutral-gray-20); margin-bottom: 16px; }
+.empty-exams p { font-weight: 600; color: var(--neutral-gray-60); margin-bottom: 4px; }
+.empty-exams span { font-size: 0.8125rem; color: var(--neutral-gray-40); }
+
+/* Email Toggle */
+.email-toggle { margin-top: 0 !important; margin-bottom: 0 !important; }
+.toggle-label { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 0.875rem; color: var(--neutral-gray-60); user-select: none; }
+.toggle-label input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-switch { position: relative; width: 44px; height: 24px; background: var(--neutral-gray-20); border-radius: 12px; transition: background 0.2s ease; flex-shrink: 0; }
+.toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s ease; }
+.toggle-label input:checked + .toggle-switch { background: var(--azure-blue); }
+.toggle-label input:checked + .toggle-switch::after { transform: translateX(20px); }
+.toggle-text { display: flex; align-items: center; gap: 6px; }
+
+/* DateTime Row */
+.datetime-row { display: flex; gap: 8px; }
+.datetime-row input { flex: 1; height: 40px; }
+.field-hint { font-size: 0.75rem; color: var(--neutral-gray-50); margin-top: 6px; display: block; }
+
+/* Preview Modal */
+.preview-modal { max-width: 700px; max-height: 85vh; }
+.preview-modal .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
+.preview-modal .modal-title { display: flex; align-items: center; gap: 12px; font-size: 1.125rem; font-weight: 600; }
+.preview-modal .modal-close { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--neutral-gray-50); }
+.preview-modal .modal-close:hover { background: var(--neutral-gray-4); color: var(--neutral-gray-80); }
+.preview-modal .modal-body { padding: 0; max-height: calc(85vh - 130px); overflow-y: auto; }
+
+/* Exam Info */
+.exam-info { padding: 16px 20px; background: var(--neutral-gray-2); border-bottom: 1px solid var(--neutral-gray-6); }
+.exam-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 480px) { .exam-info-grid { grid-template-columns: repeat(4, 1fr); } }
+.exam-info-item { display: flex; flex-direction: column; gap: 2px; }
+.exam-info-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.3px; color: var(--neutral-gray-50); }
+.exam-info-value { font-size: 0.875rem; font-weight: 600; color: var(--neutral-gray-80); }
+
+/* Questions List */
+.questions-list { padding: 16px 20px; }
+.question-item { padding: 16px; background: var(--neutral-white); border: 1px solid var(--neutral-gray-6); border-radius: 8px; margin-bottom: 12px; }
+.question-item:last-child { margin-bottom: 0; }
+.question-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.question-number { font-size: 0.75rem; font-weight: 600; color: var(--azure-blue); background: var(--azure-lighter-blue); padding: 4px 8px; border-radius: 4px; }
+.question-marks { font-size: 0.75rem; color: var(--neutral-gray-50); }
+.question-text { font-size: 0.9375rem; color: var(--neutral-gray-80); line-height: 1.5; }
+.question-options { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.question-option { display: flex; align-items: flex-start; gap: 8px; font-size: 0.875rem; color: var(--neutral-gray-60); padding: 8px 12px; background: var(--neutral-gray-2); border-radius: 6px; }
+.question-option-label { font-weight: 600; color: var(--neutral-gray-80); min-width: 20px; }
+.question-type-badge { font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; background: var(--neutral-gray-6); color: var(--neutral-gray-50); text-transform: uppercase; }
+
+/* Loading Spinner */
+.loading-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--neutral-gray-10); border-top-color: var(--azure-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Modal Actions */
+.modal-actions { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--neutral-gray-6); background: var(--neutral-gray-2); }
+.modal-action-btn {
+    display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+    font-size: 0.8125rem; font-weight: 600; font-family: var(--font-family);
+    border-radius: 6px; cursor: pointer; transition: all 0.15s ease;
+}
+.modal-action-btn svg { width: 16px; height: 16px; }
+.btn-reset { background: #FFF4CE; color: #835C00; border: 1px solid #D4A900; }
+.btn-reset:hover { background: #FFE066; }
+.btn-grade { background: var(--azure-blue); color: white; border: none; }
+.btn-grade:hover { background: var(--azure-blue-hover); }
+.btn-reset:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+    .exams-title { font-size: 1.375rem; }
+    .exams-icon { width: 28px; height: 28px; }
+    .assign-card-body { padding: 16px; }
+    .exam-item { padding: 12px 16px; }
+    .filter-section { padding: 12px 16px; }
+    .filter-row { grid-template-columns: 1fr; }
+}
+
+/* Select2 Small Override */
+.select2-container--small .select2-selection--single { height: 36px !important; }
+.select2-container--small .select2-selection--single .select2-selection__rendered { line-height: 34px !important; font-size: 0.8125rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content" id="pageContent">
+<!-- Page Header -->
+<div class="exams-header">
+    <div class="exams-header-content">
+        <h1 class="exams-title">
+            <svg class="exams-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Practice Exams
+        </h1>
+        <p class="exams-subtitle">Assign and manage practice exams for students</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="exam-stats">
+    <div class="exam-stat-card">
+        <div class="exam-stat-icon pending-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+        </div>
+        <div class="exam-stat-content">
+            <div class="exam-stat-value">{{ pending_exams|default(0) }}</div>
+            <div class="exam-stat-label">Pending</div>
+        </div>
+    </div>
+    <div class="exam-stat-card">
+        <div class="exam-stat-icon progress-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+            </svg>
+        </div>
+        <div class="exam-stat-content">
+            <div class="exam-stat-value">{{ in_progress_exams|default(0) }}</div>
+            <div class="exam-stat-label">In Progress</div>
+        </div>
+    </div>
+    <div class="exam-stat-card">
+        <div class="exam-stat-icon grading-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                <path d="M9 14l2 2 4-4"/>
+            </svg>
+        </div>
+        <div class="exam-stat-content">
+            <div class="exam-stat-value">{{ needs_grading|default(0) }}</div>
+            <div class="exam-stat-label">Needs Grading</div>
+        </div>
+    </div>
+    <div class="exam-stat-card">
+        <div class="exam-stat-icon completed-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div class="exam-stat-content">
+            <div class="exam-stat-value">{{ completed_exams|default(0) }}</div>
+            <div class="exam-stat-label">Completed</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="exams-grid">
+    <!-- Assign Exam Card -->
+    <div class="assign-card">
+        <div class="assign-card-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>Assign New Exam</span>
+        </div>
+        <div class="assign-card-body">
+            <form id="assign-form">
+                <!-- Student Selection -->
+                <div class="form-field">
+                    <label class="field-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Student
+                    </label>
+                    <select class="select2-student" id="student-select" required>
+                        <option value="">Choose student...</option>
+                        {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Subject Filter -->
+                <div class="form-field">
+                    <label class="field-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        Subject Filter
+                    </label>
+                    <div class="subject-tabs">
+                        <button type="button" class="subject-tab active" data-subject="">All</button>
+                        {% for subject in subjects %}
+                        <button type="button" class="subject-tab" data-subject="{{ subject.id }}">{{ subject.name[:3] }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Question Set -->
+                <div class="form-field">
+                    <label class="field-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Question Set
+                    </label>
+                    <select class="select2-question-set" id="question-set-select" required>
+                        <option value="">Choose question set...</option>
+                        {% for qs in question_sets %}
+                        <option value="{{ qs.id }}" data-subject="{{ qs.subject_id }}" data-questions="{{ qs.question_count }}" data-marks="{{ qs.total_marks }}">
+                            {{ qs.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="question-set-preview" id="qs-preview" style="display: none;">
+                        <span class="qs-questions"><strong id="qs-q-count">0</strong> questions</span>
+                        <span class="qs-marks"><strong id="qs-m-count">0</strong> marks</span>
+                    </div>
+                </div>
+
+                <!-- Exam Date & Time -->
+                <div class="form-field">
+                    <label class="field-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        Exam Date & Time
+                    </label>
+                    <div class="datetime-row">
+                        <input type="date" class="filter-input" id="exam-date" required>
+                        <input type="time" class="filter-input" id="exam-time" value="09:00">
+                    </div>
+                    <span class="field-hint">Schedule when the exam should be available</span>
+                </div>
+
+                <!-- Email Notification Toggle -->
+                <div class="form-field email-toggle">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="send-email" checked>
+                        <span class="toggle-switch"></span>
+                        <span class="toggle-text">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Send email with magic link
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="assign-btn" id="assign-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Assign Exam
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assigned Exams List -->
+    <div class="assigned-card">
+        <div class="assigned-card-header">
+            <div class="assigned-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span>Assigned Exams</span>
+            </div>
+            <span class="assigned-count" id="exam-count">{{ exams|length if exams else 0 }} total</span>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Subject</label>
+                    <select class="select2-filter" id="filter-subject">
+                        <option value="">All Subjects</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Student</label>
+                    <select class="select2-filter" id="filter-student">
+                        <option value="">All Students</option>
+                        {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">From Date</label>
+                    <input type="date" class="filter-input" id="filter-date-from">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">To Date</label>
+                    <input type="date" class="filter-input" id="filter-date-to">
+                </div>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <select class="select2-filter" id="filter-status">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="grading">Grading</option>
+                        <option value="released">Released</option>
+                    </select>
+                </div>
+                <div class="filter-actions" style="grid-column: span 3;">
+                    <button type="button" class="filter-btn filter-btn-primary" id="apply-filters">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px;">
+                            <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        Apply Filters
+                    </button>
+                    <button type="button" class="filter-btn filter-btn-secondary" id="clear-filters">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="assigned-card-body" id="exam-list-container">
+            {% if exams %}
+            <div class="exam-list" id="exam-list">
+                {% for exam in exams %}
+                <div class="exam-item" data-exam-id="{{ exam.id }}">
+                    <div class="exam-item-icon subject-{{ exam.subject_code|lower if exam.subject_code else 'eng' }}">
+                        {{ exam.subject_name[0] if exam.subject_name else 'E' }}
+                    </div>
+                    <div class="exam-item-content">
+                        <div class="exam-item-title">{{ exam.exam_title }}</div>
+                        <div class="exam-item-meta">
+                            <span>{{ exam.student_name }}</span>
+                            <span class="meta-dot"></span>
+                            <span>{{ exam.exam_date.strftime('%d %b %Y') if exam.exam_date else 'No date' }}{% if exam.scheduled_at %} {{ exam.scheduled_at.strftime('%H:%M') }}{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="exam-item-status">
+                        {% if exam.display_status == 'soon' %}
+                        <span class="status-badge status-soon">Soon</span>
+                        {% elif exam.display_status == 'scheduled' %}
+                        <span class="status-badge status-scheduled">Scheduled</span>
+                        {% else %}
+                        <span class="status-badge status-{{ exam.status }}">
+                            {{ exam.status|replace('_', ' ')|title }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-exams" id="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p>No exams assigned yet</p>
+                <span>Use the form on the left to assign a practice exam</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Exam Preview Modal -->
+<div class="modal-overlay" id="preview-modal">
+    <div class="modal preview-modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span id="modal-exam-title">Exam Preview</span>
+                <span class="status-badge" id="modal-status" style="margin-left: 8px;">-</span>
+            </div>
+            <button class="modal-close" onclick="closePreviewModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="exam-info" id="modal-exam-info">
+                <div class="exam-info-grid">
+                    <div class="exam-info-item">
+                        <div class="exam-info-label">Student</div>
+                        <div class="exam-info-value" id="modal-student">-</div>
+                    </div>
+                    <div class="exam-info-item">
+                        <div class="exam-info-label">Subject</div>
+                        <div class="exam-info-value" id="modal-subject">-</div>
+                    </div>
+                    <div class="exam-info-item">
+                        <div class="exam-info-label">Scheduled</div>
+                        <div class="exam-info-value" id="modal-date">-</div>
+                    </div>
+                    <div class="exam-info-item">
+                        <div class="exam-info-label">Total Marks</div>
+                        <div class="exam-info-value" id="modal-marks">-</div>
+                    </div>
+                </div>
+
+                <!-- Edit Schedule Section -->
+                <div class="edit-schedule-section" id="edit-schedule-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--neutral-gray-10);">
+                    <div class="exam-info-label" style="margin-bottom: 8px;">Edit Schedule</div>
+                    <div style="display: flex; gap: 8px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <input type="date" class="filter-input" id="modal-edit-date" style="width: 100%; height: 36px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <input type="time" class="filter-input" id="modal-edit-time" style="width: 100%; height: 36px;">
+                        </div>
+                        <button type="button" class="filter-btn filter-btn-primary" id="btn-save-schedule" onclick="saveSchedule()" style="white-space: nowrap;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px;">
+                                <path d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="questions-list" id="modal-questions">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions" id="modal-actions">
+            <button class="modal-action-btn btn-reset" id="btn-reset-exam" onclick="resetExam()" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reset Exam
+            </button>
+            <button class="modal-action-btn btn-grade" id="btn-grade-exam" onclick="goToGrading()" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Grade Exam
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Show content after DOM is ready
+    document.getElementById('pageContent').classList.add('loaded');
+
+    // Initialize Select2 for student dropdown
+    $('#student-select').select2({
+        placeholder: 'Search student...',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Initialize Select2 for question set dropdown
+    $('#question-set-select').select2({
+        placeholder: 'Search question set...',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Initialize Select2 for filter dropdowns (smaller)
+    $('.select2-filter').select2({
+        placeholder: function() {
+            return $(this).data('placeholder') || 'Select...';
+        },
+        allowClear: true,
+        width: '100%',
+        containerCssClass: 'select2-container--small'
+    });
+
+    // Set today's date as default
+    document.getElementById('exam-date').value = new Date().toISOString().split('T')[0];
+    // Set default time to 9:00 AM
+    document.getElementById('exam-time').value = '09:00';
+});
+
+// Store all question sets for filtering
+const allQuestionSets = [
+    { id: '', text: 'Choose question set...', subject: '' },
+    {% for qs in question_sets %}
+    { id: '{{ qs.id }}', text: '{{ qs.title|e }}', subject: '{{ qs.subject_id }}', questions: '{{ qs.question_count }}', marks: '{{ qs.total_marks }}' },
+    {% endfor %}
+];
+
+// Subject filter tabs
+document.querySelectorAll('.subject-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.subject-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        const subjectId = this.dataset.subject;
+
+        // Filter question sets
+        const filteredSets = allQuestionSets.filter(qs => {
+            if (!qs.id) return true; // Keep placeholder
+            return !subjectId || qs.subject == subjectId;
+        });
+
+        // Destroy and recreate Select2 with filtered data
+        const $select = $('#question-set-select');
+        $select.empty();
+
+        filteredSets.forEach(qs => {
+            const option = new Option(qs.text, qs.id, false, false);
+            if (qs.id) {
+                $(option).data('subject', qs.subject);
+                $(option).data('questions', qs.questions);
+                $(option).data('marks', qs.marks);
+            }
+            $select.append(option);
+        });
+
+        $select.val('').trigger('change');
+        document.getElementById('qs-preview').style.display = 'none';
+    });
+});
+
+// Question set preview
+$('#question-set-select').on('change', function() {
+    const selected = this.options[this.selectedIndex];
+    const preview = document.getElementById('qs-preview');
+
+    if (this.value) {
+        document.getElementById('qs-q-count').textContent = selected.dataset.questions;
+        document.getElementById('qs-m-count').textContent = selected.dataset.marks;
+        preview.style.display = 'flex';
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+// Form submission
+document.getElementById('assign-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const studentId = document.getElementById('student-select').value;
+    const questionSetId = document.getElementById('question-set-select').value;
+    const examDate = document.getElementById('exam-date').value;
+    const examTime = document.getElementById('exam-time').value || '09:00';
+    const examDateTime = `${examDate} ${examTime}:00`;
+    const sendEmail = document.getElementById('send-email').checked;
+    const btn = document.getElementById('assign-btn');
+
+    if (!studentId || !questionSetId) {
+        showToast('Please select a student and question set', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Assigning...';
+
+    try {
+        const response = await fetch('/admin/exams/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: parseInt(studentId),
+                question_set_id: parseInt(questionSetId),
+                exam_date: examDate,
+                exam_datetime: examDateTime,
+                send_email: sendEmail
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            let message = 'Exam assigned successfully!';
+            if (data.email_sent) {
+                message += ' Email sent with magic link.';
+            } else if (sendEmail) {
+                message += ' (Email could not be sent - check SMTP settings)';
+            }
+            showToast(message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast(data.error || 'Failed to assign exam', 'error');
+        }
+    } catch (error) {
+        showToast('Error assigning exam', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 4v16m8-8H4"/></svg> Assign Exam';
+    }
+});
+
+// Apply filters
+document.getElementById('apply-filters').addEventListener('click', applyFilters);
+
+async function applyFilters() {
+    const params = new URLSearchParams();
+
+    const subject = document.getElementById('filter-subject').value;
+    const student = document.getElementById('filter-student').value;
+    const status = document.getElementById('filter-status').value;
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+
+    if (subject) params.append('subject', subject);
+    if (student) params.append('student', student);
+    if (status) params.append('status', status);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+
+    const container = document.getElementById('exam-list-container');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+    try {
+        const response = await fetch('/admin/exams/filter?' + params.toString());
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('exam-count').textContent = data.count + ' total';
+
+            if (data.exams.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-exams">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No exams match your filters</p>
+                        <span>Try adjusting your filter criteria</span>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div class="exam-list" id="exam-list"></div>';
+                const list = document.getElementById('exam-list');
+
+                data.exams.forEach(exam => {
+                    const subjectCode = (exam.subject_code || 'eng').toLowerCase();
+                    const subjectInitial = exam.subject_name ? exam.subject_name[0] : 'E';
+                    const displayStatus = exam.display_status || exam.status;
+                    const statusText = displayStatus.replace('_', ' ');
+                    const dateDisplay = exam.exam_date + (exam.scheduled_time ? ' ' + exam.scheduled_time : '');
+
+                    list.innerHTML += `
+                        <div class="exam-item" data-exam-id="${exam.id}">
+                            <div class="exam-item-icon subject-${subjectCode}">${subjectInitial}</div>
+                            <div class="exam-item-content">
+                                <div class="exam-item-title">${exam.exam_title}</div>
+                                <div class="exam-item-meta">
+                                    <span>${exam.student_name}</span>
+                                    <span class="meta-dot"></span>
+                                    <span>${dateDisplay || 'No date'}</span>
+                                </div>
+                            </div>
+                            <div class="exam-item-status">
+                                <span class="status-badge status-${displayStatus}">
+                                    ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Re-attach click handlers
+                attachExamClickHandlers();
+            }
+        }
+    } catch (error) {
+        console.error('Filter error:', error);
+        showToast('Error filtering exams', 'error');
+    }
+}
+
+// Clear filters
+document.getElementById('clear-filters').addEventListener('click', function() {
+    $('#filter-subject').val('').trigger('change');
+    $('#filter-student').val('').trigger('change');
+    $('#filter-status').val('').trigger('change');
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value = '';
+    window.location.reload();
+});
+
+// Store current exam id for actions
+let currentExamId = null;
+let currentExamStatus = null;
+
+// Exam preview modal
+function attachExamClickHandlers() {
+    document.querySelectorAll('.exam-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const examId = this.dataset.examId;
+            openPreviewModal(examId);
+        });
+    });
+}
+
+// Attach handlers on page load
+attachExamClickHandlers();
+
+async function openPreviewModal(examId) {
+    const modal = document.getElementById('preview-modal');
+    const questionsContainer = document.getElementById('modal-questions');
+    const resetBtn = document.getElementById('btn-reset-exam');
+    const gradeBtn = document.getElementById('btn-grade-exam');
+    const statusBadge = document.getElementById('modal-status');
+
+    // Reset buttons
+    resetBtn.style.display = 'none';
+    gradeBtn.style.display = 'none';
+    currentExamId = examId;
+
+    modal.classList.add('active');
+    questionsContainer.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+    try {
+        const response = await fetch(`/admin/exams/${examId}/preview`);
+        const data = await response.json();
+
+        if (data.success) {
+            const exam = data.exam;
+            currentExamStatus = exam.status;
+
+            // Update header info
+            document.getElementById('modal-exam-title').textContent = exam.exam_title;
+            document.getElementById('modal-student').textContent = exam.student_name;
+            document.getElementById('modal-subject').textContent = exam.subject_name;
+
+            // Format scheduled date/time display
+            let scheduleDisplay = 'Not set';
+            if (exam.scheduled_at) {
+                scheduleDisplay = exam.scheduled_at;
+            } else if (exam.exam_date) {
+                scheduleDisplay = exam.exam_date;
+            }
+            document.getElementById('modal-date').textContent = scheduleDisplay;
+            document.getElementById('modal-marks').textContent = data.total_marks + ' marks';
+
+            // Populate edit fields
+            const editSection = document.getElementById('edit-schedule-section');
+            if (exam.status === 'pending') {
+                editSection.style.display = 'block';
+                // Set date and time values
+                if (exam.exam_date_raw) {
+                    document.getElementById('modal-edit-date').value = exam.exam_date_raw;
+                }
+                if (exam.scheduled_time) {
+                    document.getElementById('modal-edit-time').value = exam.scheduled_time;
+                } else {
+                    document.getElementById('modal-edit-time').value = '09:00';
+                }
+            } else {
+                editSection.style.display = 'none';
+            }
+
+            // Update status badge
+            const statusText = exam.status.replace('_', ' ');
+            statusBadge.textContent = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+            statusBadge.className = 'status-badge status-' + exam.status;
+
+            // Show appropriate buttons based on status
+            if (['submitted', 'grading', 'released', 'in_progress'].includes(exam.status)) {
+                resetBtn.style.display = 'flex';
+            }
+            if (['submitted', 'grading'].includes(exam.status)) {
+                gradeBtn.style.display = 'flex';
+            }
+
+            // Render questions
+            if (data.questions.length === 0) {
+                questionsContainer.innerHTML = '<div class="empty-exams"><p>No questions in this exam</p></div>';
+            } else {
+                questionsContainer.innerHTML = data.questions.map((q, idx) => {
+                    let optionsHtml = '';
+                    if (q.options && q.options.length > 0) {
+                        const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+                        optionsHtml = `
+                            <div class="question-options">
+                                ${q.options.map((opt, i) => `
+                                    <div class="question-option">
+                                        <span class="question-option-label">${labels[i]}.</span>
+                                        <span>${opt}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="question-item">
+                            <div class="question-header">
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <span class="question-number">Q${q.question_number}</span>
+                                    <span class="question-type-badge">${q.question_type}</span>
+                                </div>
+                                <span class="question-marks">${q.marks} mark${q.marks > 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="question-text">${q.question_text}</div>
+                            ${optionsHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+        } else {
+            questionsContainer.innerHTML = '<div class="empty-exams"><p>Error loading exam</p></div>';
+        }
+    } catch (error) {
+        console.error('Preview error:', error);
+        questionsContainer.innerHTML = '<div class="empty-exams"><p>Error loading exam</p></div>';
+    }
+}
+
+// Reset exam to allow student to retake
+async function resetExam() {
+    if (!currentExamId) return;
+
+    if (!confirm('Are you sure you want to reset this exam? All student answers will be deleted and they will need to retake the exam.')) {
+        return;
+    }
+
+    const resetBtn = document.getElementById('btn-reset-exam');
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Resetting...';
+
+    try {
+        const response = await fetch(`/admin/exams/${currentExamId}/reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            closePreviewModal();
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast(data.error || 'Failed to reset exam', 'error');
+        }
+    } catch (error) {
+        console.error('Reset error:', error);
+        showToast('Error resetting exam', 'error');
+    } finally {
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Reset Exam';
+    }
+}
+
+// Go to grading page
+function goToGrading() {
+    if (currentExamId) {
+        window.location.href = `/admin/grading/${currentExamId}`;
+    }
+}
+
+// Save schedule changes
+async function saveSchedule() {
+    if (!currentExamId) return;
+
+    const newDate = document.getElementById('modal-edit-date').value;
+    const newTime = document.getElementById('modal-edit-time').value || '09:00';
+
+    if (!newDate) {
+        showToast('Please select a date', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-schedule');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>';
+
+    try {
+        const response = await fetch(`/admin/exams/${currentExamId}/update-schedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                exam_date: newDate,
+                exam_time: newTime
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Schedule updated successfully', 'success');
+            // Update display
+            document.getElementById('modal-date').textContent = data.scheduled_display;
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to update schedule', 'error');
+        }
+    } catch (error) {
+        console.error('Save schedule error:', error);
+        showToast('Error updating schedule', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px;"><path d="M5 13l4 4L19 7"/></svg> Save';
+    }
+}
+
+function closePreviewModal() {
+    document.getElementById('preview-modal').classList.remove('active');
+}
+
+// Close modal on overlay click
+document.getElementById('preview-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePreviewModal();
+    }
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreviewModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - {{ app_name }}{% endblock %}
+
+{% set active_page = 'students' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Students Page Styles */
+.students-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+}
+.students-header h1 { margin: 0; }
+.students-header p { margin: 4px 0 0 0; }
+
+/* Student Row */
+.student-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid var(--neutral-gray-6); cursor: pointer;
+    transition: background 0.1s;
+}
+.student-row:last-child { border-bottom: none; }
+.student-row:hover { background: var(--neutral-gray-2); }
+
+.student-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--azure-blue); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.875rem; flex-shrink: 0;
+}
+.student-info { flex: 1; min-width: 0; }
+.student-name { font-weight: 600; color: var(--neutral-gray-80); }
+.student-email { font-size: 0.75rem; color: var(--neutral-gray-50); }
+
+.student-stats { display: flex; gap: 16px; align-items: center; }
+.student-stat { text-align: center; min-width: 60px; }
+.student-stat-value { font-weight: 700; color: var(--neutral-gray-80); font-size: 1rem; }
+.student-stat-label { font-size: 0.625rem; color: var(--neutral-gray-50); text-transform: uppercase; }
+
+.student-status { margin-left: 8px; }
+.status-active { background: #DFF6DD; color: #107C10; padding: 4px 8px; border-radius: 12px; font-size: 0.6875rem; font-weight: 600; }
+.status-inactive { background: #FDE7E9; color: #D13438; padding: 4px 8px; border-radius: 12px; font-size: 0.6875rem; font-weight: 600; }
+
+/* Student Detail Modal */
+.student-modal { max-width: 700px; max-height: 90vh; }
+.student-modal .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--neutral-gray-6);
+}
+.student-modal .modal-title { font-size: 1.125rem; font-weight: 600; }
+.student-modal .modal-close {
+    background: none; border: none; cursor: pointer; padding: 8px;
+    border-radius: 6px; color: var(--neutral-gray-50);
+}
+.student-modal .modal-close:hover { background: var(--neutral-gray-4); }
+.student-modal .modal-body { padding: 0; max-height: calc(90vh - 60px); overflow-y: auto; }
+
+/* Tabs */
+.modal-tabs {
+    display: flex; border-bottom: 1px solid var(--neutral-gray-6);
+    padding: 0 20px; background: var(--neutral-gray-2);
+}
+.modal-tab {
+    padding: 12px 16px; font-size: 0.875rem; font-weight: 500;
+    color: var(--neutral-gray-50); cursor: pointer; border: none;
+    background: none; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+}
+.modal-tab:hover { color: var(--neutral-gray-80); }
+.modal-tab.active { color: var(--azure-blue); border-bottom-color: var(--azure-blue); }
+
+.tab-content { display: none; padding: 20px; }
+.tab-content.active { display: block; }
+
+/* Stats Grid */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (min-width: 480px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+.stat-box {
+    background: var(--neutral-gray-2); border-radius: 8px; padding: 12px;
+    text-align: center;
+}
+.stat-box-value { font-size: 1.5rem; font-weight: 700; color: var(--neutral-gray-80); }
+.stat-box-label { font-size: 0.6875rem; color: var(--neutral-gray-50); text-transform: uppercase; margin-top: 2px; }
+
+/* Subject Performance */
+.subject-perf { margin-top: 20px; }
+.subject-perf-title { font-weight: 600; margin-bottom: 12px; color: var(--neutral-gray-80); }
+.subject-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--neutral-gray-6);
+}
+.subject-item:last-child { border-bottom: none; }
+.subject-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.875rem;
+}
+.subject-info { flex: 1; }
+.subject-name { font-weight: 600; font-size: 0.875rem; }
+.subject-meta { font-size: 0.75rem; color: var(--neutral-gray-50); }
+.subject-score { font-weight: 700; font-size: 1rem; }
+
+/* Recent Exams */
+.recent-exams { margin-top: 20px; }
+.recent-exam-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--neutral-gray-6);
+}
+.recent-exam-item:last-child { border-bottom: none; }
+.exam-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.75rem;
+}
+.exam-info { flex: 1; }
+.exam-title { font-weight: 600; font-size: 0.8125rem; }
+.exam-meta { font-size: 0.6875rem; color: var(--neutral-gray-50); }
+
+/* Edit Form */
+.edit-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.8125rem; font-weight: 600; color: var(--neutral-gray-60); }
+.form-group input {
+    height: 40px; padding: 0 12px; border: 1px solid var(--neutral-gray-20);
+    border-radius: 6px; font-size: 0.875rem;
+}
+.form-group input:focus {
+    outline: none; border-color: var(--azure-blue);
+    box-shadow: 0 0 0 3px rgba(0,120,212,0.15);
+}
+
+/* Action Buttons */
+.action-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--neutral-gray-6); }
+.action-title { font-weight: 600; margin-bottom: 12px; color: var(--neutral-gray-80); }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.action-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 6px; font-size: 0.8125rem;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.action-btn svg { width: 16px; height: 16px; }
+.action-btn-primary { background: var(--azure-blue); color: white; border: none; }
+.action-btn-primary:hover { background: var(--azure-blue-hover); }
+.action-btn-secondary { background: var(--neutral-white); color: var(--neutral-gray-60); border: 1px solid var(--neutral-gray-20); }
+.action-btn-secondary:hover { background: var(--neutral-gray-4); }
+.action-btn-danger { background: #FDE7E9; color: #D13438; border: none; }
+.action-btn-danger:hover { background: #FBCACD; }
+.action-btn-success { background: #DFF6DD; color: #107C10; border: none; }
+.action-btn-success:hover { background: #C8ECC7; }
+
+/* Password Section */
+.password-section { margin-top: 16px; }
+.password-row { display: flex; gap: 8px; align-items: flex-end; }
+.password-row .form-group { flex: 1; }
+.password-row .action-btn { height: 40px; }
+
+/* Loading */
+.loading-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--neutral-gray-10); border-top-color: var(--azure-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty State */
+.empty-stats { text-align: center; padding: 24px; color: var(--neutral-gray-50); }
+.empty-stats svg { width: 40px; height: 40px; margin-bottom: 8px; opacity: 0.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="students-header">
+    <div>
+        <h1 class="page-title">Students</h1>
+        <p class="page-subtitle">{{ pagination.total if pagination else students|length }} registered students</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAddModal()" style="width: auto;">+ Add Student</button>
+</div>
+
+<div class="card">
+    {% if students %}
+    <div style="padding: 0;">
+        {% for student in students %}
+        <div class="student-row" onclick="openStudentModal({{ student.id }})">
+            <div class="student-avatar">{{ student.full_name[0] }}</div>
+            <div class="student-info">
+                <div class="student-name">{{ student.full_name }}</div>
+                <div class="student-email">{{ student.email }}</div>
+            </div>
+            <div class="student-stats">
+                <div class="student-stat">
+                    <div class="student-stat-value">{{ student.exam_count or 0 }}</div>
+                    <div class="student-stat-label">Exams</div>
+                </div>
+                <div class="student-stat">
+                    <div class="student-stat-value">
+                        {% if student.avg_score %}{{ "%.0f"|format(student.avg_score) }}%{% else %}-{% endif %}
+                    </div>
+                    <div class="student-stat-label">Avg</div>
+                </div>
+            </div>
+            <div class="student-status">
+                {% if student.is_active %}
+                <span class="status-active">Active</span>
+                {% else %}
+                <span class="status-inactive">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <p>No students yet. Add your first student!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="add-modal">
+    <div class="modal">
+        <div class="modal-header">Add New Student</div>
+        <div class="modal-body">
+            <form id="add-form">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" id="student-name" required placeholder="e.g., Rifah">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="student-email" required placeholder="rifah@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="student-password" required placeholder="Minimum 6 characters">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+            <button class="btn btn-primary" onclick="createStudent()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div class="modal-overlay" id="student-modal">
+    <div class="modal student-modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-student-name">Student Details</span>
+            <button class="modal-close" onclick="closeModal('student-modal')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-tabs">
+            <button class="modal-tab active" onclick="switchTab('stats')">Statistics</button>
+            <button class="modal-tab" onclick="switchTab('edit')">Edit Details</button>
+            <button class="modal-tab" onclick="switchTab('actions')">Actions</button>
+        </div>
+        <div class="modal-body">
+            <!-- Stats Tab -->
+            <div class="tab-content active" id="tab-stats">
+                <div class="loading-spinner" id="stats-loading">
+                    <div class="spinner"></div>
+                </div>
+                <div id="stats-content" style="display:none;">
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-box-value" id="stat-total">0</div>
+                            <div class="stat-box-label">Total Exams</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-value" id="stat-completed">0</div>
+                            <div class="stat-box-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-value" id="stat-avg">-</div>
+                            <div class="stat-box-label">Avg Score</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-value" id="stat-best">-</div>
+                            <div class="stat-box-label">Best Score</div>
+                        </div>
+                    </div>
+
+                    <div class="subject-perf">
+                        <div class="subject-perf-title">Subject Performance</div>
+                        <div id="subject-stats"></div>
+                    </div>
+
+                    <div class="recent-exams">
+                        <div class="subject-perf-title">Recent Exams</div>
+                        <div id="recent-exams"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Tab -->
+            <div class="tab-content" id="tab-edit">
+                <div class="edit-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="edit-name" placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="edit-email" placeholder="Email address">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Joined</label>
+                            <input type="text" id="edit-joined" disabled style="background: var(--neutral-gray-4);">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Login</label>
+                            <input type="text" id="edit-lastlogin" disabled style="background: var(--neutral-gray-4);">
+                        </div>
+                    </div>
+                    <button class="action-btn action-btn-primary" onclick="saveStudentDetails()" style="align-self: flex-start;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions Tab -->
+            <div class="tab-content" id="tab-actions">
+                <div class="action-section" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <div class="action-title">Password Management</div>
+                    <div class="password-section">
+                        <div class="password-row">
+                            <div class="form-group">
+                                <label>Set New Password</label>
+                                <input type="password" id="new-password" placeholder="Min 6 characters">
+                            </div>
+                            <button class="action-btn action-btn-primary" onclick="setPassword()">Set Password</button>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <button class="action-btn action-btn-secondary" onclick="sendPasswordReset()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                Send Password Reset Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <div class="action-title">Account Status</div>
+                    <div class="action-buttons">
+                        <button class="action-btn" id="toggle-status-btn" onclick="toggleStudentStatus()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                            <span id="toggle-status-text">Disable Account</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStudentId = null;
+let currentStudentData = null;
+
+function showAddModal() {
+    document.getElementById('add-modal').classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+async function createStudent() {
+    const name = document.getElementById('student-name').value;
+    const email = document.getElementById('student-email').value;
+    const password = document.getElementById('student-password').value;
+
+    if (!name || !email || !password) {
+        showToast('Please fill all fields', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/admin/students/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: name, email: email, password: password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Student created successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to create student', 'error');
+        }
+    } catch (error) {
+        showToast('Error creating student', 'error');
+    }
+}
+
+async function openStudentModal(studentId) {
+    currentStudentId = studentId;
+    document.getElementById('student-modal').classList.add('active');
+
+    // Reset to stats tab
+    switchTab('stats');
+
+    // Show loading
+    document.getElementById('stats-loading').style.display = 'flex';
+    document.getElementById('stats-content').style.display = 'none';
+
+    try {
+        const response = await fetch(`/admin/students/${studentId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            currentStudentData = data;
+            populateStudentModal(data);
+        } else {
+            showToast('Failed to load student data', 'error');
+        }
+    } catch (error) {
+        showToast('Error loading student', 'error');
+    }
+}
+
+function populateStudentModal(data) {
+    const { student, stats, subject_stats, recent_exams } = data;
+
+    // Header
+    document.getElementById('modal-student-name').textContent = student.full_name;
+
+    // Edit form
+    document.getElementById('edit-name').value = student.full_name;
+    document.getElementById('edit-email').value = student.email;
+    document.getElementById('edit-joined').value = student.created_at || 'N/A';
+    document.getElementById('edit-lastlogin').value = student.last_login || 'Never';
+
+    // Toggle button
+    const toggleBtn = document.getElementById('toggle-status-btn');
+    const toggleText = document.getElementById('toggle-status-text');
+    if (student.is_active) {
+        toggleBtn.className = 'action-btn action-btn-danger';
+        toggleText.textContent = 'Disable Account';
+    } else {
+        toggleBtn.className = 'action-btn action-btn-success';
+        toggleText.textContent = 'Enable Account';
+    }
+
+    // Stats
+    document.getElementById('stat-total').textContent = stats.total_exams || 0;
+    document.getElementById('stat-completed').textContent = stats.completed_exams || 0;
+    document.getElementById('stat-avg').textContent = stats.avg_score ? Math.round(stats.avg_score) + '%' : '-';
+    document.getElementById('stat-best').textContent = stats.best_score ? Math.round(stats.best_score) + '%' : '-';
+
+    // Subject performance
+    const subjectContainer = document.getElementById('subject-stats');
+    if (subject_stats && subject_stats.length > 0) {
+        subjectContainer.innerHTML = subject_stats.map(s => `
+            <div class="subject-item">
+                <div class="subject-icon subject-${(s.subject_code || 'eng').toLowerCase()}">${s.subject_name[0]}</div>
+                <div class="subject-info">
+                    <div class="subject-name">${s.subject_name}</div>
+                    <div class="subject-meta">${s.exam_count} exam${s.exam_count > 1 ? 's' : ''}</div>
+                </div>
+                <div class="subject-score">${Math.round(s.avg_score || 0)}%</div>
+            </div>
+        `).join('');
+    } else {
+        subjectContainer.innerHTML = '<div class="empty-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><p>No completed exams yet</p></div>';
+    }
+
+    // Recent exams
+    const recentContainer = document.getElementById('recent-exams');
+    if (recent_exams && recent_exams.length > 0) {
+        recentContainer.innerHTML = recent_exams.map(e => {
+            const statusClass = `status-${e.status}`;
+            const statusText = e.status.replace('_', ' ');
+            return `
+                <div class="recent-exam-item">
+                    <div class="exam-icon subject-${(e.subject_code || 'eng').toLowerCase()}">${e.subject_name[0]}</div>
+                    <div class="exam-info">
+                        <div class="exam-title">${e.exam_title}</div>
+                        <div class="exam-meta">${e.subject_name} &bull; ${e.exam_date || 'No date'}</div>
+                    </div>
+                    <div>
+                        ${e.percentage != null ? `<span style="font-weight:700;">${Math.round(e.percentage)}%</span>` : `<span class="status-badge ${statusClass}">${statusText}</span>`}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        recentContainer.innerHTML = '<div class="empty-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>No exams assigned yet</p></div>';
+    }
+
+    // Show content
+    document.getElementById('stats-loading').style.display = 'none';
+    document.getElementById('stats-content').style.display = 'block';
+}
+
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
+}
+
+async function saveStudentDetails() {
+    const name = document.getElementById('edit-name').value.trim();
+    const email = document.getElementById('edit-email').value.trim();
+
+    if (!name || !email) {
+        showToast('Name and email are required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/students/${currentStudentId}/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: name, email: email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Student updated successfully', 'success');
+            document.getElementById('modal-student-name').textContent = name;
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to update', 'error');
+        }
+    } catch (error) {
+        showToast('Error updating student', 'error');
+    }
+}
+
+async function setPassword() {
+    const password = document.getElementById('new-password').value;
+
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/students/${currentStudentId}/set-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Password updated successfully', 'success');
+            document.getElementById('new-password').value = '';
+        } else {
+            showToast(data.error || 'Failed to set password', 'error');
+        }
+    } catch (error) {
+        showToast('Error setting password', 'error');
+    }
+}
+
+async function sendPasswordReset() {
+    try {
+        const response = await fetch(`/admin/students/${currentStudentId}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.error || 'Failed to send reset link', 'error');
+        }
+    } catch (error) {
+        showToast('Error sending reset link', 'error');
+    }
+}
+
+async function toggleStudentStatus() {
+    try {
+        const response = await fetch(`/admin/students/${currentStudentId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Status updated', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to toggle status', 'error');
+        }
+    } catch (error) {
+        showToast('Error toggling status', 'error');
+    }
+}
+
+// Close modal on overlay click
+document.getElementById('student-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal('student-modal');
+});
+document.getElementById('add-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal('add-modal');
+});
+
+// Close on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal('student-modal');
+        closeModal('add-modal');
+    }
+});
+</script>
+{% endblock %}

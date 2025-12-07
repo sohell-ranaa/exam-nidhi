@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard - {{ app_name }}{% endblock %}
+
+{% set active_page = 'dashboard' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Hello, {{ user.full_name }}!</h1>
+<p class="page-subtitle">Ready for today's practice?</p>
+
+{% if stats and stats.total_exams %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_exams }}</div>
+        <div class="stat-label">Exams Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ "%.0f"|format(stats.avg_score or 0) }}%</div>
+        <div class="stat-label">Average Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ "%.0f"|format(stats.best_score or 0) }}%</div>
+        <div class="stat-label">Best Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ pending_exams|length }}</div>
+        <div class="stat-label">Pending Exams</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-2">
+    <div class="card-header">Pending Exams</div>
+    {% if pending_exams %}
+    <div>
+        {% for exam in pending_exams %}
+        <a href="{{ url_for('student.take_exam', exam_id=exam.id) }}" class="list-item" style="text-decoration: none; color: inherit;">
+            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+                {{ exam.subject_name[0] }}
+            </div>
+            <div class="list-item-content">
+                <div class="list-item-title">{{ exam.exam_title }}</div>
+                <div class="list-item-subtitle">{{ exam.subject_name }} - Due: {{ exam.exam_date }}</div>
+            </div>
+            <div class="list-item-action">
+                {% if exam.status == 'in_progress' %}
+                <span class="badge badge-progress">Continue</span>
+                {% else %}
+                <span class="badge badge-pending">Start</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>No pending exams. Great job!</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">Recent Results</div>
+    {% if completed_exams %}
+    <div>
+        {% for exam in completed_exams %}
+        <a href="{{ url_for('student.view_results', exam_id=exam.id) }}" class="list-item" style="text-decoration: none; color: inherit;">
+            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+                {{ exam.subject_name[0] }}
+            </div>
+            <div class="list-item-content">
+                <div class="list-item-title">{{ exam.exam_title }}</div>
+                <div class="list-item-subtitle">{{ exam.subject_name }} - {{ exam.released_at }}</div>
+            </div>
+            <div class="list-item-action">
+                <span class="stat-value {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}" style="font-size: 1.25rem;">
+                    {{ "%.0f"|format(exam.percentage or 0) }}%
+                </span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <p>No completed exams yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

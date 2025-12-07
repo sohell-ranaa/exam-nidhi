@@ -1,0 +1,16 @@
+{# Print Exam Instructions Component #}
+{# Usage: {% include 'components/print_instructions.html' %} #}
+{# Required: question_set (object with duration_minutes) #}
+
+<div class="instructions">
+    <div class="instructions-title">General Instructions</div>
+    <ul class="instructions-list">
+        <li>Answer all questions in the spaces provided.</li>
+        <li>Read each question carefully before answering.</li>
+        <li>For multiple choice questions, clearly mark your chosen answer.</li>
+        <li>Show all your working where applicable - marks may be awarded for method.</li>
+        <li>Write clearly and legibly in black or blue pen.</li>
+        <li>Calculators may be used unless otherwise stated.</li>
+        <li>You have {{ question_set.duration_minutes }} minutes to complete this examination.</li>
+    </ul>
+</div>

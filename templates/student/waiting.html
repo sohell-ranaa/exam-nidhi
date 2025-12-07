@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Waiting for Results - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
+    <div class="card-body" style="padding: 3rem 2rem;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 64px; height: 64px; margin: 0 auto 1rem; color: var(--primary);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+
+        <h1 class="page-title">Exam Submitted!</h1>
+        <p class="text-muted" style="margin-bottom: 2rem;">
+            {{ exam.exam_title }}<br>
+            Your answers are being reviewed by your teacher.
+        </p>
+
+        <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--radius); margin-bottom: 2rem;">
+            <div class="text-muted">Status</div>
+            <span class="badge badge-{{ exam.status }}">{{ exam.status|title }}</span>
+        </div>
+
+        <p class="text-muted">
+            You will be able to view your results once your teacher releases them.
+        </p>
+
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary" style="margin-top: 1.5rem;">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

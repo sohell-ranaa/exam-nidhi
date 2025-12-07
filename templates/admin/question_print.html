@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question_set.title }} - Exam Paper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print-exam.css') }}">
+</head>
+<body class="print-exam">
+    <!-- Print Button -->
+    <button class="print-btn no-print" onclick="window.print()">
+        Print Exam Paper
+    </button>
+
+    <!-- Cover Page with Header, Instructions, and Examiner Table -->
+    {% include 'components/print_header.html' %}
+
+    <!-- Questions Section -->
+    <div class="questions-section">
+        {% for question in questions %}
+        {% include 'components/print_question.html' %}
+        {% endfor %}
+    </div>
+
+    <!-- Page Footer -->
+    <div class="page-footer">
+        <span class="doc-code">SG/2026/T1/Y6/{{ question_set.subject_code }}/P1/TB</span>
+        <span class="end-text"><strong>END OF PAPER</strong></span>
+    </div>
+</body>
+</html>

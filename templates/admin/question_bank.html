@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Question Bank - {{ app_name }}{% endblock %}
+
+{% set active_page = 'questions' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/question-bank.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Question Bank</h1>
+    <p class="page-subtitle">Browse subjects, question sets, and export printable exam papers</p>
+</div>
+
+<!-- Breadcrumb Navigation -->
+{% include 'components/breadcrumb.html' %}
+
+<!-- LEVEL 1: Subject Cards (when no subject selected) -->
+{% if not current_subject %}
+<div class="subjects-grid">
+    {% for subject in subjects %}
+    {% include 'components/subject_card.html' %}
+    {% endfor %}
+</div>
+
+<!-- LEVEL 2: Question Sets for selected subject -->
+{% elif current_subject and not current_set %}
+<div class="sets-header">
+    <h2>{{ current_subject.name }}</h2>
+    <p>{{ question_sets|length }} question sets available</p>
+</div>
+
+<div class="sets-grid">
+    {% for qs in question_sets %}
+    {% include 'components/question_set_card.html' %}
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <h3>No Question Sets</h3>
+        <p>No question sets found for {{ current_subject.name }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- LEVEL 3: Questions in selected set -->
+{% elif current_set %}
+<div class="set-detail-header">
+    <div class="set-detail-info">
+        <h2>{{ current_set.title }}</h2>
+        <p>{{ current_subject.name }} | {{ questions|length }} questions | {{ current_set.total_marks }} marks | {{ current_set.duration_minutes }} minutes</p>
+    </div>
+    <div class="set-detail-actions">
+        <button class="btn btn-secondary" onclick="window.open('/questions/print/{{ current_set.id }}', '_blank')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print Exam Paper
+        </button>
+        <button class="btn btn-secondary" onclick="window.open('/questions/print/{{ current_set.id }}?answers=1', '_blank')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Print Answer Key
+        </button>
+        <div class="dropdown">
+            <button class="btn btn-ghost dropdown-toggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export
+            </button>
+            <div class="dropdown-menu">
+                <a href="/questions/export/json/{{ current_set.id }}" class="dropdown-item">Export JSON</a>
+                <a href="/questions/export/csv/{{ current_set.id }}" class="dropdown-item">Export CSV</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="questions-list">
+    {% for q in questions %}
+    {% include 'components/question_item.html' %}
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <h3>No Questions</h3>
+        <p>This question set has no questions yet</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Active Sessions - {{ app_name }}{% endblock %}
+
+{% set active_page = 'profile' %}
+{% block nav_items %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin.html' %}
+{% else %}
+{% include 'components/nav_student.html' %}
+{% endif %}
+{% endblock %}
+{% block mobile_nav %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin_mobile.html' %}
+{% else %}
+{% include 'components/nav_student_mobile.html' %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('profile.view_profile') }}" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Profile
+    </a>
+    <h1 class="page-title">Active Sessions</h1>
+    <p class="page-subtitle">Manage devices where you're logged in</p>
+</div>
+
+{% if sessions|length > 1 %}
+<div class="revoke-all-section">
+    <button class="btn btn-danger" onclick="revokeAll()">Revoke All Other Sessions</button>
+</div>
+{% endif %}
+
+<div class="sessions-list">
+    {% for session in sessions %}
+    <div class="session-card {% if session.is_current %}current{% endif %}">
+        <div class="session-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+        </div>
+        <div class="session-info">
+            <div class="session-header">
+                <span class="session-ip">{{ session.ip_address }}</span>
+                {% if session.is_current %}
+                <span class="current-badge">Current</span>
+                {% endif %}
+            </div>
+            <div class="session-meta">
+                <span>Created: {{ session.created_at }}</span>
+                <span>Expires: {{ session.expires_at }}</span>
+            </div>
+            {% if session.user_agent %}
+            <div class="session-agent">{{ session.user_agent[:80] }}{% if session.user_agent|length > 80 %}...{% endif %}</div>
+            {% endif %}
+        </div>
+        {% if not session.is_current %}
+        <button class="btn btn-ghost btn-sm" onclick="revokeSession({{ session.id }})">Revoke</button>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No active sessions found</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--azure-blue);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+.back-link svg {
+    width: 16px;
+    height: 16px;
+}
+.revoke-all-section {
+    margin-bottom: 1rem;
+}
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.session-card {
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.session-card.current {
+    border-color: var(--azure-blue);
+    background: var(--azure-lighter-blue);
+}
+.session-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--neutral-gray-4);
+    border-radius: var(--radius-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.session-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--neutral-gray-50);
+}
+.session-card.current .session-icon {
+    background: var(--azure-light-blue);
+}
+.session-card.current .session-icon svg {
+    color: var(--azure-blue);
+}
+.session-info {
+    flex: 1;
+}
+.session-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.session-ip {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+}
+.current-badge {
+    background: var(--azure-blue);
+    color: white;
+    font-size: 0.625rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.session-meta {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.25rem;
+}
+.session-agent {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-40);
+    margin-top: 0.25rem;
+}
+</style>
+
+<script>
+async function revokeSession(sessionId) {
+    if (!confirm('Revoke this session?')) return;
+
+    try {
+        const response = await fetch(`/profile/sessions/${sessionId}/revoke`, { method: 'POST' });
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            location.reload();
+        } else {
+            showToast(result.error, 'error');
+        }
+    } catch (error) {
+        showToast('Failed to revoke session', 'error');
+    }
+}
+
+async function revokeAll() {
+    if (!confirm('Revoke all other sessions? You will remain logged in on this device.')) return;
+
+    try {
+        const response = await fetch('/profile/sessions/revoke-all', { method: 'POST' });
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            location.reload();
+        } else {
+            showToast(result.error, 'error');
+        }
+    } catch (error) {
+        showToast('Failed to revoke sessions', 'error');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Results: {{ exam.exam_title }} - {{ app_name }}{% endblock %}
+
+{% set active_page = 'results' %}
+{% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline" style="width: auto;">
+        &larr; Back to Dashboard
+    </a>
+    <button type="button" class="btn btn-secondary share-btn" onclick="toggleShare()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+            <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+        Share
+    </button>
+</div>
+
+<!-- Share Modal -->
+<div class="share-modal" id="shareModal" style="display: none;">
+    <div class="share-modal-content">
+        <div class="share-modal-header">
+            <h3>Share Results</h3>
+            <button type="button" onclick="toggleShare()" class="share-close">&times;</button>
+        </div>
+        <div class="share-modal-body">
+            {% if exam.is_public and exam.share_token %}
+            <div class="share-active">
+                <div class="share-status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--success);">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Sharing is enabled</span>
+                </div>
+                <div class="share-link-container">
+                    <input type="text" class="share-link-input" id="shareLinkInput" value="{{ request.url_root }}share/exam/{{ exam.share_token }}" readonly>
+                    <button type="button" class="btn btn-primary" onclick="copyShareLink()">Copy</button>
+                </div>
+                <p class="share-views">{{ exam.share_views or 0 }} views</p>
+                <button type="button" class="btn btn-outline btn-danger" onclick="revokeShare()">Stop Sharing</button>
+            </div>
+            {% else %}
+            <div class="share-inactive">
+                <p>Share your exam results with others. Anyone with the link can view your score and answers.</p>
+                <button type="button" class="btn btn-primary" onclick="createShare()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                        <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Create Share Link
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card mb-2">
+    <div class="card-body">
+        <h1 class="page-title text-center">{{ exam.exam_title }}</h1>
+        <p class="page-subtitle text-center">{{ exam.subject_name }}</p>
+
+        <div class="score-display">
+            <div class="score-value {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}">
+                {{ "%.0f"|format(exam.percentage or 0) }}%
+            </div>
+            <div class="score-label">
+                {{ exam.total_score or 0 }} / {{ exam.max_score }} marks
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+            {% if exam.percentage >= 80 %}
+            <span style="font-size: 2rem;">Excellent work!</span>
+            {% elif exam.percentage >= 60 %}
+            <span style="font-size: 2rem;">Good job!</span>
+            {% elif exam.percentage >= 40 %}
+            <span style="font-size: 2rem;">Keep practicing!</span>
+            {% else %}
+            <span style="font-size: 2rem;">Don't give up!</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<h2 style="font-size: 1.25rem; margin-bottom: 1rem;">Review Your Answers</h2>
+
+{% for question in questions %}
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">Question {{ question.question_number }}</span>
+        <span style="font-weight: 600; {% if question.marks_awarded == question.marks %}color: var(--success);{% elif question.marks_awarded > 0 %}color: var(--warning);{% else %}color: var(--danger);{% endif %}">
+            {{ question.marks_awarded or 0 }} / {{ question.marks }}
+        </span>
+    </div>
+    <div class="question-body">
+        <div class="question-text">{{ question.question_text }}</div>
+
+        {% if question.image_url %}
+        <img src="{{ question.image_url }}" alt="Question image" style="max-width: 100%; border-radius: 8px; margin: 1rem 0;">
+        {% endif %}
+
+        {% if question.question_type == 'mcq' %}
+        <div class="mcq-options">
+            {% for option in question.options %}
+            <div class="mcq-option {% if option == question.correct_answer %}correct{% elif option == question.student_answer and option != question.correct_answer %}incorrect{% endif %}">
+                <div class="mcq-radio" style="{% if option == question.student_answer %}background: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %}; border-color: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %};{% endif %}"></div>
+                <span>{{ option }}</span>
+                {% if option == question.correct_answer %}
+                <span style="margin-left: auto; color: var(--success); font-weight: 500;">Correct</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="margin-top: 1rem;">
+            <div style="margin-bottom: 0.5rem;">
+                <strong>Your Answer:</strong>
+                <div style="padding: 0.75rem; background: var(--gray-100); border-radius: var(--radius); margin-top: 0.25rem;">
+                    {{ question.student_answer or 'No answer provided' }}
+                </div>
+            </div>
+            <div>
+                <strong>Correct Answer:</strong>
+                <div style="padding: 0.75rem; background: #DFF6DD; border-radius: var(--radius); margin-top: 0.25rem; color: var(--success);">
+                    {{ question.correct_answer }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if question.explanation %}
+        <div style="margin-top: 1rem; padding: 1rem; background: var(--primary-light); border-radius: var(--radius);">
+            <strong>Explanation:</strong> {{ question.explanation }}
+        </div>
+        {% endif %}
+
+        {% if question.admin_feedback %}
+        <div style="margin-top: 1rem; padding: 1rem; background: #FFF4CE; border-radius: var(--radius);">
+            <strong>Teacher's Feedback:</strong> {{ question.admin_feedback }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<style>
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.share-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.score-display {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+.score-value {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.score-label {
+    font-size: 1rem;
+    color: var(--neutral-gray-50);
+    margin-top: 0.5rem;
+}
+.score-excellent { color: #107C10; }
+.score-good { color: var(--azure-blue); }
+.score-average { color: #835C00; }
+.score-poor { color: var(--error); }
+
+/* Share Modal */
+.share-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.share-modal-content {
+    background: var(--neutral-white);
+    border-radius: var(--radius-large);
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+.share-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+.share-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--neutral-gray-50);
+    line-height: 1;
+}
+.share-modal-body {
+    padding: 1.25rem;
+}
+.share-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    color: var(--success);
+    font-weight: 500;
+}
+.share-link-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+}
+.share-link-input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--neutral-gray-20);
+    border-radius: var(--radius-medium);
+    font-size: 0.8125rem;
+    background: var(--neutral-gray-4);
+}
+.share-views {
+    font-size: 0.8125rem;
+    color: var(--neutral-gray-50);
+    margin-bottom: 1rem;
+}
+.share-inactive {
+    text-align: center;
+}
+.share-inactive p {
+    color: var(--neutral-gray-60);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+.btn-danger {
+    color: var(--error);
+    border-color: var(--error);
+}
+.btn-danger:hover {
+    background: var(--error);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const examId = {{ exam.id }};
+
+    function toggleShare() {
+        const modal = document.getElementById('shareModal');
+        modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function createShare() {
+        try {
+            const response = await fetch('/share/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'exam', id: examId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Share link created!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to create share link', 'error');
+            }
+        } catch (error) {
+            showToast('Error creating share link', 'error');
+        }
+    }
+
+    async function revokeShare() {
+        if (!confirm('Stop sharing this result? The link will no longer work.')) return;
+
+        try {
+            const response = await fetch('/share/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'exam', id: examId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Sharing stopped', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to stop sharing', 'error');
+            }
+        } catch (error) {
+            showToast('Error stopping share', 'error');
+        }
+    }
+
+    function copyShareLink() {
+        const input = document.getElementById('shareLinkInput');
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value).then(() => {
+            showToast('Link copied to clipboard!', 'success');
+        }).catch(() => {
+            document.execCommand('copy');
+            showToast('Link copied!', 'success');
+        });
+    }
+
+    // Close modal on click outside
+    document.getElementById('shareModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            toggleShare();
+        }
+    });
+</script>
+{% endblock %}

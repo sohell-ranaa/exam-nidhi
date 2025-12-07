@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - {{ app_name }}{% endblock %}
+
+{% set active_page = 'profile' %}
+{% block nav_items %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin.html' %}
+{% else %}
+{% include 'components/nav_student.html' %}
+{% endif %}
+{% endblock %}
+{% block mobile_nav %}
+{% if user.role_name == 'Admin' %}
+{% include 'components/nav_admin_mobile.html' %}
+{% else %}
+{% include 'components/nav_student_mobile.html' %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="profile-avatar">{{ profile.full_name[0] }}</div>
+    <div class="profile-info">
+        <h1>{{ profile.full_name }}</h1>
+        <p class="profile-role">{{ profile.role_name }}</p>
+    </div>
+    <a href="{{ url_for('profile.edit_profile') }}" class="btn btn-secondary">Edit Profile</a>
+</div>
+
+<div class="profile-grid">
+    <div class="card">
+        <div class="card-header">Account Information</div>
+        <div class="card-body">
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ profile.email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-value">{{ profile.full_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Role</span>
+                <span class="info-value">{{ profile.role_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Member Since</span>
+                <span class="info-value">{{ profile.created_at }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Last Login</span>
+                <span class="info-value">{{ profile.last_login or 'Never' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Security</div>
+        <div class="card-body">
+            <a href="{{ url_for('profile.change_password') }}" class="security-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <div>
+                    <strong>Change Password</strong>
+                    <span>Update your password</span>
+                </div>
+            </a>
+            <a href="{{ url_for('profile.view_sessions') }}" class="security-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                <div>
+                    <strong>Active Sessions</strong>
+                    <span>Manage your logged-in devices</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {% if recent_activity %}
+    <div class="card full-width">
+        <div class="card-header">Recent Activity</div>
+        <div class="card-body no-padding">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Type</th>
+                        <th>IP Address</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for act in recent_activity %}
+                    <tr>
+                        <td>{{ act.action|replace('_', ' ')|title }}</td>
+                        <td>{{ act.resource_type or '-' }}</td>
+                        <td>{{ act.ip_address or '-' }}</td>
+                        <td>{{ act.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.profile-avatar {
+    width: 64px;
+    height: 64px;
+    background: var(--azure-blue);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.profile-info {
+    flex: 1;
+}
+.profile-info h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--neutral-gray-80);
+}
+.profile-role {
+    color: var(--neutral-gray-50);
+    margin: 0;
+}
+.profile-grid {
+    display: grid;
+    gap: 1rem;
+}
+@media (min-width: 768px) {
+    .profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .full-width {
+        grid-column: span 2;
+    }
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.info-label {
+    color: var(--neutral-gray-50);
+    font-size: 0.875rem;
+}
+.info-value {
+    color: var(--neutral-gray-80);
+    font-weight: 500;
+}
+.security-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-medium);
+    text-decoration: none;
+    color: var(--neutral-gray-80);
+    transition: background 0.15s;
+    margin-bottom: 0.5rem;
+}
+.security-link:hover {
+    background: var(--neutral-gray-4);
+}
+.security-link svg {
+    width: 24px;
+    height: 24px;
+    color: var(--azure-blue);
+}
+.security-link div {
+    display: flex;
+    flex-direction: column;
+}
+.security-link strong {
+    font-weight: 600;
+}
+.security-link span {
+    font-size: 0.75rem;
+    color: var(--neutral-gray-50);
+}
+.no-padding {
+    padding: 0;
+}
+</style>
+{% endblock %}

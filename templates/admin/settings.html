@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - {{ app_name }}{% endblock %}
+
+{% set active_page = 'settings' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Settings</h1>
+<p class="page-subtitle">Configure system preferences and email settings</p>
+
+<div class="settings-grid">
+    <!-- SMTP Settings -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-title">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Email (SMTP)
+            </div>
+            <span class="badge {% if smtp.smtp_enabled %}badge-released{% else %}badge-pending{% endif %}">
+                {{ 'Enabled' if smtp.smtp_enabled else 'Disabled' }}
+            </span>
+        </div>
+        <div class="card-body">
+            <form id="smtpForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">SMTP Host</label>
+                        <input type="text" name="smtp_host" class="form-input" value="{{ smtp.smtp_host or '' }}" placeholder="smtp.gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="number" name="smtp_port" class="form-input" value="{{ smtp.smtp_port or 587 }}" placeholder="587">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="smtp_user" class="form-input" value="{{ smtp.smtp_user or '' }}" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="smtp_password" class="form-input" value="{{ smtp.smtp_password or '' }}" placeholder="App password">
+                    <span class="form-hint">For Gmail, use an App Password from your Google Account settings</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">From Email</label>
+                        <input type="email" name="smtp_from_email" class="form-input" value="{{ smtp.smtp_from_email or '' }}" placeholder="noreply@school.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">From Name</label>
+                        <input type="text" name="smtp_from_name" class="form-input" value="{{ smtp.smtp_from_name or 'Y6 Practice Exam' }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="smtp_use_tls" {% if smtp.smtp_use_tls %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Use TLS
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="smtp_enabled" {% if smtp.smtp_enabled %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Enable Email Notifications
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="testSMTP()">Test Connection</button>
+                    <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Marking Thresholds -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-title">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Marking Thresholds
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="markingForm">
+                <div class="threshold-grid">
+                    <div class="threshold-item excellent">
+                        <div class="threshold-label">
+                            <span class="grade-badge">{{ settings.grade_labels.excellent }}</span>
+                            Excellent
+                        </div>
+                        <div class="threshold-input">
+                            <input type="number" name="excellent" class="form-input" value="{{ settings.marking_thresholds.excellent }}" min="0" max="100">
+                            <span>% and above</span>
+                        </div>
+                    </div>
+                    <div class="threshold-item good">
+                        <div class="threshold-label">
+                            <span class="grade-badge">{{ settings.grade_labels.good }}</span>
+                            Good
+                        </div>
+                        <div class="threshold-input">
+                            <input type="number" name="good" class="form-input" value="{{ settings.marking_thresholds.good }}" min="0" max="100">
+                            <span>% and above</span>
+                        </div>
+                    </div>
+                    <div class="threshold-item satisfactory">
+                        <div class="threshold-label">
+                            <span class="grade-badge">{{ settings.grade_labels.satisfactory }}</span>
+                            Satisfactory
+                        </div>
+                        <div class="threshold-input">
+                            <input type="number" name="satisfactory" class="form-input" value="{{ settings.marking_thresholds.satisfactory }}" min="0" max="100">
+                            <span>% and above</span>
+                        </div>
+                    </div>
+                    <div class="threshold-item needs-improvement">
+                        <div class="threshold-label">
+                            <span class="grade-badge">{{ settings.grade_labels.needs_improvement }}</span>
+                            Needs Work
+                        </div>
+                        <div class="threshold-input">
+                            <span>Below {{ settings.marking_thresholds.satisfactory }}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group mt-2">
+                    <button type="submit" class="btn btn-primary">Save Marking Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Exam Defaults -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-title">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Exam Defaults
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="examForm">
+                <div class="form-group">
+                    <label class="form-label">Default Duration (minutes)</label>
+                    <input type="number" name="duration_minutes" class="form-input" value="{{ settings.exam_defaults.duration_minutes }}" min="10" max="180">
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="show_correct_answers" {% if settings.exam_defaults.show_correct_answers %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Show correct answers after release
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="show_marks_per_question" {% if settings.exam_defaults.show_marks_per_question %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Show marks per question
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="allow_late_submission" {% if settings.exam_defaults.allow_late_submission %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Allow late submissions
+                    </label>
+                </div>
+                <div class="btn-group mt-2">
+                    <button type="submit" class="btn btn-primary">Save Exam Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- System Settings (Timezone) -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-title">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                System & Timezone
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="systemForm">
+                <div class="form-group">
+                    <label class="form-label">Timezone</label>
+                    <select name="timezone" class="form-input" id="timezone-select">
+                        <option value="Pacific/Midway" {% if settings.system.timezone == 'Pacific/Midway' %}selected{% endif %}>UTC-11:00 - Midway Island</option>
+                        <option value="Pacific/Honolulu" {% if settings.system.timezone == 'Pacific/Honolulu' %}selected{% endif %}>UTC-10:00 - Hawaii</option>
+                        <option value="America/Anchorage" {% if settings.system.timezone == 'America/Anchorage' %}selected{% endif %}>UTC-09:00 - Alaska</option>
+                        <option value="America/Los_Angeles" {% if settings.system.timezone == 'America/Los_Angeles' %}selected{% endif %}>UTC-08:00 - Pacific Time (US)</option>
+                        <option value="America/Denver" {% if settings.system.timezone == 'America/Denver' %}selected{% endif %}>UTC-07:00 - Mountain Time (US)</option>
+                        <option value="America/Chicago" {% if settings.system.timezone == 'America/Chicago' %}selected{% endif %}>UTC-06:00 - Central Time (US)</option>
+                        <option value="America/New_York" {% if settings.system.timezone == 'America/New_York' %}selected{% endif %}>UTC-05:00 - Eastern Time (US)</option>
+                        <option value="America/Sao_Paulo" {% if settings.system.timezone == 'America/Sao_Paulo' %}selected{% endif %}>UTC-03:00 - Brasilia</option>
+                        <option value="UTC" {% if settings.system.timezone == 'UTC' %}selected{% endif %}>UTC+00:00 - UTC</option>
+                        <option value="Europe/London" {% if settings.system.timezone == 'Europe/London' %}selected{% endif %}>UTC+00:00 - London</option>
+                        <option value="Europe/Paris" {% if settings.system.timezone == 'Europe/Paris' %}selected{% endif %}>UTC+01:00 - Paris, Berlin</option>
+                        <option value="Europe/Istanbul" {% if settings.system.timezone == 'Europe/Istanbul' %}selected{% endif %}>UTC+03:00 - Istanbul</option>
+                        <option value="Asia/Dubai" {% if settings.system.timezone == 'Asia/Dubai' %}selected{% endif %}>UTC+04:00 - Dubai</option>
+                        <option value="Asia/Karachi" {% if settings.system.timezone == 'Asia/Karachi' %}selected{% endif %}>UTC+05:00 - Pakistan</option>
+                        <option value="Asia/Kolkata" {% if settings.system.timezone == 'Asia/Kolkata' %}selected{% endif %}>UTC+05:30 - India</option>
+                        <option value="Asia/Dhaka" {% if settings.system.timezone == 'Asia/Dhaka' %}selected{% endif %}>UTC+06:00 - Bangladesh</option>
+                        <option value="Asia/Bangkok" {% if settings.system.timezone == 'Asia/Bangkok' %}selected{% endif %}>UTC+07:00 - Bangkok</option>
+                        <option value="Asia/Singapore" {% if settings.system.timezone == 'Asia/Singapore' %}selected{% endif %}>UTC+08:00 - Singapore</option>
+                        <option value="Asia/Kuala_Lumpur" {% if settings.system.timezone == 'Asia/Kuala_Lumpur' %}selected{% endif %}>UTC+08:00 - Kuala Lumpur</option>
+                        <option value="Asia/Hong_Kong" {% if settings.system.timezone == 'Asia/Hong_Kong' %}selected{% endif %}>UTC+08:00 - Hong Kong</option>
+                        <option value="Asia/Shanghai" {% if settings.system.timezone == 'Asia/Shanghai' %}selected{% endif %}>UTC+08:00 - China</option>
+                        <option value="Asia/Tokyo" {% if settings.system.timezone == 'Asia/Tokyo' %}selected{% endif %}>UTC+09:00 - Tokyo</option>
+                        <option value="Australia/Sydney" {% if settings.system.timezone == 'Australia/Sydney' %}selected{% endif %}>UTC+10:00 - Sydney</option>
+                        <option value="Pacific/Auckland" {% if settings.system.timezone == 'Pacific/Auckland' %}selected{% endif %}>UTC+12:00 - Auckland</option>
+                    </select>
+                    <span class="form-hint">All exam dates and times will be displayed in this timezone</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">School Name</label>
+                    <input type="text" name="school_name" class="form-input" value="{{ settings.system.school_name or 'Spring Gate Private School' }}">
+                </div>
+                <div class="btn-group mt-2">
+                    <button type="submit" class="btn btn-primary">Save System Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-title">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Notifications
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="notificationForm">
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="email_on_assignment" {% if settings.notifications.email_on_assignment %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Email when exam is assigned
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="email_on_results" {% if settings.notifications.email_on_results %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Email when results are released
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" name="email_deadline_reminder" {% if settings.notifications.email_deadline_reminder %}checked{% endif %}>
+                        <span class="toggle-switch"></span>
+                        Email deadline reminders
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reminder hours before deadline</label>
+                    <input type="number" name="reminder_hours_before" class="form-input" value="{{ settings.notifications.reminder_hours_before }}" min="1" max="72">
+                </div>
+                <div class="btn-group mt-2">
+                    <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ========== CSS Variable Aliases (Map to base.html variables) ========== */
+:root {
+    --white: var(--neutral-white, #FFFFFF);
+    --gray-50: var(--neutral-gray-2, #FAF9F8);
+    --gray-100: var(--neutral-gray-6, #EDEBE9);
+    --gray-200: var(--neutral-gray-10, #D2D0CE);
+    --gray-300: var(--neutral-gray-20, #C8C6C4);
+    --gray-400: var(--neutral-gray-30, #A19F9D);
+    --gray-500: var(--neutral-gray-40, #8A8886);
+    --gray-600: var(--neutral-gray-50, #605E5C);
+    --gray-700: var(--neutral-gray-60, #484644);
+    --gray-800: var(--neutral-gray-80, #323130);
+    --primary: var(--azure-blue, #0078D4);
+    --primary-hover: var(--azure-blue-hover, #106EBE);
+    --success: #107C10;
+    --warning: #FFB900;
+    --danger: #D13438;
+    --radius: var(--radius-medium, 4px);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+    --transition: all 0.15s ease;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.card-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.toggle-label input {
+    display: none;
+}
+
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: var(--gray-300);
+    border-radius: 24px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-label input:checked + .toggle-switch {
+    background: var(--primary);
+}
+
+.toggle-label input:checked + .toggle-switch::after {
+    left: 22px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.threshold-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.threshold-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-radius: var(--radius);
+    background: var(--gray-50);
+}
+
+.threshold-item.excellent { border-left: 4px solid var(--success); }
+.threshold-item.good { border-left: 4px solid var(--primary); }
+.threshold-item.satisfactory { border-left: 4px solid var(--warning); }
+.threshold-item.needs-improvement { border-left: 4px solid var(--danger); }
+
+.threshold-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.grade-badge {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+}
+
+.threshold-item.excellent .grade-badge { color: var(--success); }
+.threshold-item.good .grade-badge { color: var(--primary); }
+.threshold-item.satisfactory .grade-badge { color: #835C00; }
+.threshold-item.needs-improvement .grade-badge { color: var(--danger); }
+
+.threshold-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-600);
+    font-size: 0.875rem;
+}
+
+.threshold-input .form-input {
+    width: 80px;
+    text-align: center;
+    padding: 0.5rem;
+}
+</style>
+
+<script>
+// Helper to manage button loading state
+function setButtonLoading(btn, loading, originalText = 'Save') {
+    if (loading) {
+        btn.disabled = true;
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = 'Saving...';
+    } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.originalText || originalText;
+    }
+}
+
+document.getElementById('smtpForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+
+    const formData = new FormData(this);
+    const data = {
+        smtp_host: formData.get('smtp_host'),
+        smtp_port: formData.get('smtp_port'),
+        smtp_user: formData.get('smtp_user'),
+        smtp_password: formData.get('smtp_password'),
+        smtp_from_email: formData.get('smtp_from_email'),
+        smtp_from_name: formData.get('smtp_from_name'),
+        smtp_use_tls: formData.has('smtp_use_tls'),
+        smtp_enabled: formData.has('smtp_enabled')
+    };
+
+    try {
+        const result = await fetchAPI('/settings/smtp', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'SMTP settings saved', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Failed to save settings', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+});
+
+document.getElementById('markingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+
+    const formData = new FormData(this);
+    const data = {
+        excellent: formData.get('excellent'),
+        good: formData.get('good'),
+        satisfactory: formData.get('satisfactory')
+    };
+
+    try {
+        const result = await fetchAPI('/settings/marking', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'Marking settings saved', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Failed to save settings', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+});
+
+document.getElementById('examForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+
+    const formData = new FormData(this);
+    const data = {
+        duration_minutes: formData.get('duration_minutes'),
+        show_correct_answers: formData.has('show_correct_answers'),
+        show_marks_per_question: formData.has('show_marks_per_question'),
+        allow_late_submission: formData.has('allow_late_submission')
+    };
+
+    try {
+        const result = await fetchAPI('/settings/exam', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'Exam settings saved', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Failed to save settings', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+});
+
+document.getElementById('systemForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+
+    const formData = new FormData(this);
+    const data = {
+        timezone: formData.get('timezone'),
+        school_name: formData.get('school_name')
+    };
+
+    try {
+        const result = await fetchAPI('/settings/system', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'System settings saved', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Failed to save settings', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+});
+
+document.getElementById('notificationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+
+    const formData = new FormData(this);
+    const data = {
+        email_on_assignment: formData.has('email_on_assignment'),
+        email_on_results: formData.has('email_on_results'),
+        email_deadline_reminder: formData.has('email_deadline_reminder'),
+        reminder_hours_before: formData.get('reminder_hours_before')
+    };
+
+    try {
+        const result = await fetchAPI('/settings/notifications', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'Notification settings saved', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Failed to save settings', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+});
+
+async function testSMTP() {
+    const testBtn = document.querySelector('button[onclick="testSMTP()"]');
+    const originalText = testBtn.textContent;
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
+
+    const form = document.getElementById('smtpForm');
+    const formData = new FormData(form);
+    const data = {
+        smtp_host: formData.get('smtp_host'),
+        smtp_port: formData.get('smtp_port'),
+        smtp_user: formData.get('smtp_user'),
+        smtp_password: formData.get('smtp_password'),
+        smtp_use_tls: formData.has('smtp_use_tls')
+    };
+
+    try {
+        showToast('Testing SMTP connection...', 'info');
+        const result = await fetchAPI('/settings/smtp/test', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        showToast(result.message || 'Connection test completed', result.success ? 'success' : 'error');
+    } catch (error) {
+        showToast('Connection test failed', 'error');
+    } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = originalText;
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{# Subject Card Component #}
+{# Usage: {% include 'components/subject_card.html' %} #}
+{# Required: subject (object with code, name, set_count, question_count) #}
+
+<a href="?subject={{ subject.code }}" class="subject-card subject-{{ subject.code|lower }}">
+    <div class="subject-icon-large">
+        {% if subject.code == 'ENG' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        {% elif subject.code == 'MAT' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        {% elif subject.code == 'ICT' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        {% endif %}
+    </div>
+    <div class="subject-details">
+        <h3>{{ subject.name }}</h3>
+        <p class="subject-stats">
+            <span>{{ subject.set_count }} Question Sets</span>
+            <span>{{ subject.question_count }} Questions</span>
+        </p>
+    </div>
+    <div class="subject-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+    </div>
+</a>

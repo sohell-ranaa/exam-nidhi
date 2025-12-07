@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+
+{% block title %}Grade: {{ exam.student_name }} - {{ app_name }}{% endblock %}
+
+{% set active_page = 'grading' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.grading') }}" class="btn btn-outline mb-2" style="width: auto;">&larr; Back to Queue</a>
+
+<div class="card mb-2">
+    <div class="card-body">
+        <h1 class="page-title">{{ exam.student_name }}</h1>
+        <p class="page-subtitle">{{ exam.exam_title }} - {{ exam.subject_name }}</p>
+    </div>
+</div>
+
+<form id="grading-form">
+    {% for question in questions %}
+    <div class="question-card" data-question-id="{{ question.id }}">
+        <div class="question-header">
+            <span class="question-number">Q{{ question.question_number }}</span>
+            <span class="question-marks">[{{ question.marks }} mark{% if question.marks > 1 %}s{% endif %}]</span>
+        </div>
+        <div class="question-body">
+            <div class="question-text mb-2">{{ question.question_text }}</div>
+
+            {% if question.question_type == 'mcq' %}
+            <div class="mcq-options">
+                {% for option in question.options %}
+                <div class="mcq-option {% if option == question.correct_answer %}correct{% elif option == question.student_answer and option != question.correct_answer %}incorrect{% endif %}" style="cursor: default;">
+                    <div class="mcq-radio" style="{% if option == question.student_answer %}background: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %}; border-color: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %};{% endif %}"></div>
+                    <span>{{ option }}</span>
+                    {% if option == question.correct_answer %}
+                    <span style="margin-left: auto; color: var(--success); font-weight: 500;">Correct</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% elif question.question_type == 'drawing' %}
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Student's Drawing:</div>
+                <div style="padding: 0.75rem; background: var(--gray-100); border-radius: var(--radius); text-align: center;">
+                    {% if question.student_answer and question.student_answer.startswith('data:image') %}
+                    <img src="{{ question.student_answer }}" alt="Student drawing" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                    {% else %}
+                    <span style="color: #999;">No drawing provided</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Expected Answer:</div>
+                <div style="padding: 0.75rem; background: #DFF6DD; border-radius: var(--radius); color: var(--success);">
+                    {{ question.correct_answer }}
+                </div>
+            </div>
+
+            {% elif question.question_type == 'matching' %}
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Student's Matches:</div>
+                <div style="padding: 0.75rem; background: var(--gray-100); border-radius: var(--radius);">
+                    {{ question.student_answer or 'No answer provided' }}
+                </div>
+            </div>
+            {% if question.matching_pairs %}
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Matching Items:</div>
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        {% for pair in question.matching_pairs %}
+                        <div style="padding: 8px; background: #f5f5f5; margin-bottom: 4px; border-radius: 4px;">{{ loop.index }}. {{ pair.left }}</div>
+                        {% endfor %}
+                    </div>
+                    <div style="flex: 1;">
+                        {% for pair in question.matching_pairs %}
+                        <div style="padding: 8px; background: #e8f5e9; margin-bottom: 4px; border-radius: 4px;">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}. {{ pair.right }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Correct Answer:</div>
+                <div style="padding: 0.75rem; background: #DFF6DD; border-radius: var(--radius); color: var(--success);">
+                    {{ question.correct_answer }}
+                </div>
+            </div>
+
+            {% else %}
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Student's Answer:</div>
+                <div style="padding: 0.75rem; background: var(--gray-100); border-radius: var(--radius);">
+                    {{ question.student_answer or 'No answer provided' }}
+                </div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div class="form-label">Correct Answer:</div>
+                <div style="padding: 0.75rem; background: #DFF6DD; border-radius: var(--radius); color: var(--success);">
+                    {{ question.correct_answer }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grading-row">
+                <div class="mark-buttons">
+                    <button type="button" class="mark-btn wrong {% if question.marks_awarded == 0 or (question.marks_awarded is none and not question.is_correct) %}active{% endif %}"
+                            onclick="markAnswer(this, 0)" title="Wrong (0 marks)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M6 6l12 12M6 18L18 6"/>
+                        </svg>
+                    </button>
+                    {% if question.marks > 1 %}
+                    <button type="button" class="mark-btn partial {% if question.marks_awarded is not none and question.marks_awarded > 0 and question.marks_awarded < question.marks %}active{% endif %}"
+                            onclick="markAnswer(this, {{ (question.marks / 2)|int }})" title="Partial ({{ (question.marks / 2)|int }}/{{ question.marks }} marks)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M5 12h14"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                    <button type="button" class="mark-btn correct {% if question.marks_awarded == question.marks or (question.marks_awarded is none and question.is_correct) %}active{% endif %}"
+                            onclick="markAnswer(this, {{ question.marks }})" title="Correct ({{ question.marks }} marks)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                    <span class="mark-display">
+                        <input type="number" class="marks-input"
+                               data-question-id="{{ question.id }}"
+                               data-max-marks="{{ question.marks }}"
+                               min="0" max="{{ question.marks }}"
+                               value="{{ question.marks_awarded if question.marks_awarded is not none else (question.marks if question.is_correct else 0) }}">
+                        <span class="mark-total">/{{ question.marks }}</span>
+                    </span>
+                </div>
+                <input type="hidden" class="feedback-input" data-question-id="{{ question.id }}" value="{{ question.admin_feedback or '' }}">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</form>
+
+<div class="grading-footer">
+    <div class="grading-footer-left">
+        <div class="score-display">
+            <span class="score-label">Total Score:</span>
+            <span id="total-score" class="score-value">0</span>
+            <span class="score-max">/ {{ exam.max_score }}</span>
+        </div>
+        <div class="percent-display">
+            <span id="total-percent" class="percent-value">0%</span>
+        </div>
+    </div>
+    <div class="grading-footer-right">
+        <button class="btn btn-secondary" onclick="saveGrades()">Save</button>
+        <button class="btn btn-success" onclick="releaseResults()">Save & Release</button>
+        {% if exam.status == 'released' %}
+        <button class="btn btn-outline share-btn" onclick="toggleShareModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+            Share
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.grading-footer {
+    position: sticky;
+    bottom: 80px;
+    background: var(--neutral-white);
+    border: 1px solid var(--neutral-gray-6);
+    border-radius: var(--radius-large);
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+}
+.grading-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+.score-label {
+    color: var(--neutral-gray-50);
+    font-size: 0.875rem;
+}
+.score-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--azure-blue);
+}
+.score-max {
+    color: var(--neutral-gray-50);
+    font-size: 1rem;
+}
+.percent-display {
+    padding: 0.5rem 1rem;
+    background: var(--azure-lighter-blue);
+    border-radius: 20px;
+}
+.percent-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--azure-blue);
+}
+.grading-footer-right {
+    display: flex;
+    gap: 0.75rem;
+}
+.btn-success {
+    background: #107C10;
+    color: white;
+}
+.btn-success:hover {
+    background: #0E6B0E;
+}
+/* Grading row layout - simple tick/cross */
+.grading-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+.mark-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mark-btn {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--neutral-gray-20);
+    border-radius: 50%;
+    background: var(--neutral-white);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.mark-btn svg {
+    width: 24px;
+    height: 24px;
+}
+/* Wrong button (X) */
+.mark-btn.wrong {
+    color: var(--neutral-gray-40);
+}
+.mark-btn.wrong:hover {
+    border-color: #D32F2F;
+    background: #FFEBEE;
+    color: #D32F2F;
+}
+.mark-btn.wrong.active {
+    border-color: #D32F2F;
+    background: #D32F2F;
+    color: white;
+}
+/* Partial button (-) */
+.mark-btn.partial {
+    color: var(--neutral-gray-40);
+}
+.mark-btn.partial:hover {
+    border-color: #F57C00;
+    background: #FFF3E0;
+    color: #F57C00;
+}
+.mark-btn.partial.active {
+    border-color: #F57C00;
+    background: #F57C00;
+    color: white;
+}
+/* Correct button (tick) */
+.mark-btn.correct {
+    color: var(--neutral-gray-40);
+}
+.mark-btn.correct:hover {
+    border-color: #388E3C;
+    background: #E8F5E9;
+    color: #388E3C;
+}
+.mark-btn.correct.active {
+    border-color: #388E3C;
+    background: #388E3C;
+    color: white;
+}
+/* Mark display */
+.mark-display {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--neutral-gray-60);
+}
+.marks-input {
+    width: 40px;
+    text-align: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    padding: 4px;
+    border: 1px solid var(--neutral-gray-20);
+    border-radius: 4px;
+}
+.mark-total {
+    color: var(--neutral-gray-40);
+}
+@media (max-width: 640px) {
+    .grading-footer {
+        flex-direction: column;
+        bottom: 60px;
+    }
+    .grading-footer-left, .grading-footer-right {
+        width: 100%;
+        justify-content: center;
+    }
+    .grading-row {
+        flex-direction: column;
+    }
+    .marks-section, .feedback-section {
+        width: 100%;
+    }
+}
+</style>
+<!-- Share Modal -->
+<div class="share-modal" id="shareModal" style="display: none;">
+    <div class="share-modal-content">
+        <div class="share-modal-header">
+            <h3>Share Exam Results</h3>
+            <button type="button" onclick="toggleShareModal()" class="share-close">&times;</button>
+        </div>
+        <div class="share-modal-body">
+            {% if exam.is_public and exam.share_token %}
+            <div class="share-active">
+                <div class="share-status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--success);">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Sharing is enabled</span>
+                </div>
+                <div class="share-link-container">
+                    <input type="text" class="share-link-input" id="shareLinkInput" value="{{ request.url_root }}share/exam/{{ exam.share_token }}" readonly>
+                    <button type="button" class="btn btn-primary" onclick="copyShareLink()">Copy</button>
+                </div>
+                <p class="share-views">{{ exam.share_views or 0 }} views</p>
+                <button type="button" class="btn btn-outline btn-danger" onclick="revokeShare()">Stop Sharing</button>
+            </div>
+            {% else %}
+            <div class="share-inactive">
+                <p>Create a public link to share this student's exam results.</p>
+                <button type="button" class="btn btn-primary" onclick="createShare()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                        <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Create Share Link
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const examId = {{ exam.id }};
+    const maxScore = {{ exam.max_score }};
+
+    // Calculate total score
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll('.marks-input').forEach(input => {
+            total += parseInt(input.value) || 0;
+        });
+        document.getElementById('total-score').textContent = total;
+
+        // Update percentage
+        const percent = maxScore > 0 ? Math.round((total / maxScore) * 100) : 0;
+        const percentEl = document.getElementById('total-percent');
+        if (percentEl) percentEl.textContent = percent + '%';
+    }
+
+    // Listen for changes
+    document.querySelectorAll('.marks-input').forEach(input => {
+        input.addEventListener('change', updateTotal);
+        input.addEventListener('input', updateTotal);
+    });
+
+    // Initial calculation
+    updateTotal();
+
+    // Mark answer with tick/cross
+    function markAnswer(btn, value) {
+        const card = btn.closest('.question-card');
+        const input = card.querySelector('.marks-input');
+        input.value = value;
+
+        // Update button states
+        card.querySelectorAll('.mark-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        updateTotal();
+    }
+
+    // Make markAnswer global for onclick
+    window.markAnswer = markAnswer;
+
+    // Collect grades
+    function collectGrades() {
+        const grades = [];
+        document.querySelectorAll('.question-card').forEach(card => {
+            const qId = card.dataset.questionId;
+            const marks = card.querySelector('.marks-input').value;
+            const feedback = card.querySelector('.feedback-input').value;
+            grades.push({
+                question_id: parseInt(qId),
+                marks_awarded: parseInt(marks) || 0,
+                feedback: feedback
+            });
+        });
+        return grades;
+    }
+
+    // Save grades
+    async function saveGrades() {
+        const btn = document.querySelector('button[onclick="saveGrades()"]');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        try {
+            const response = await fetch(`/admin/grading/${examId}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grades: collectGrades() })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Grades saved successfully!', 'success');
+            } else {
+                showToast(data.error || 'Save failed', 'error');
+            }
+        } catch (error) {
+            showToast('Error saving grades', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save';
+        }
+    }
+
+    // Release results
+    async function releaseResults() {
+        if (!confirm('Release results to student? They will be able to see their score and correct answers.')) {
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="releaseResults()"]');
+        btn.disabled = true;
+        btn.textContent = 'Releasing...';
+
+        try {
+            // Save first
+            await fetch(`/admin/grading/${examId}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grades: collectGrades() })
+            });
+
+            // Then release
+            const response = await fetch(`/admin/grading/${examId}/release`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`Results released! Score: ${data.total_score}/${maxScore} (${data.percentage}%)`, 'success');
+                setTimeout(() => window.location.href = '/admin/grading', 1500);
+            } else {
+                showToast(data.error || 'Release failed', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Save & Release';
+            }
+        } catch (error) {
+            showToast('Error releasing results', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Save & Release';
+        }
+    }
+
+    // Share functions
+    function toggleShareModal() {
+        const modal = document.getElementById('shareModal');
+        modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function createShare() {
+        try {
+            const response = await fetch('/share/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'exam', id: examId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Share link created!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to create share link', 'error');
+            }
+        } catch (error) {
+            showToast('Error creating share link', 'error');
+        }
+    }
+
+    async function revokeShare() {
+        if (!confirm('Stop sharing this result?')) return;
+        try {
+            const response = await fetch('/share/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'exam', id: examId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Sharing stopped', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to stop sharing', 'error');
+            }
+        } catch (error) {
+            showToast('Error stopping share', 'error');
+        }
+    }
+
+    function copyShareLink() {
+        const input = document.getElementById('shareLinkInput');
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+            showToast('Link copied!', 'success');
+        }).catch(() => {
+            document.execCommand('copy');
+            showToast('Link copied!', 'success');
+        });
+    }
+
+    // Close modal on click outside
+    document.getElementById('shareModal')?.addEventListener('click', function(e) {
+        if (e.target === this) toggleShareModal();
+    });
+</script>
+<style>
+/* Share Modal Styles */
+.share-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.share-modal-content {
+    background: var(--neutral-white);
+    border-radius: var(--radius-large);
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+.share-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+.share-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--neutral-gray-50);
+}
+.share-modal-body {
+    padding: 1.25rem;
+}
+.share-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    color: var(--success);
+    font-weight: 500;
+}
+.share-link-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+}
+.share-link-input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--neutral-gray-20);
+    border-radius: var(--radius-medium);
+    font-size: 0.8125rem;
+    background: var(--neutral-gray-4);
+}
+.share-views {
+    font-size: 0.8125rem;
+    color: var(--neutral-gray-50);
+    margin-bottom: 1rem;
+}
+.share-inactive {
+    text-align: center;
+}
+.share-inactive p {
+    color: var(--neutral-gray-60);
+    margin-bottom: 1rem;
+}
+.btn-danger {
+    color: var(--error);
+    border-color: var(--error);
+}
+.btn-danger:hover {
+    background: var(--error);
+    color: white;
+}
+.share-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+</style>
+{% endblock %}

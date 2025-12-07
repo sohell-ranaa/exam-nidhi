@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ question_set.title }} - {{ app_name }}{% endblock %}
+
+{% set active_page = 'questions' %}
+{% block nav_items %}{% include 'components/nav_admin.html' %}{% endblock %}
+{% block mobile_nav %}{% include 'components/nav_admin_mobile.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+    <div>
+        <h1 class="page-title">{{ question_set.title }}</h1>
+        <p class="page-subtitle">{{ question_set.subject_name }} | {{ questions|length }} questions | {{ question_set.total_marks }} marks</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{{ url_for('questions.preview_set', set_id=question_set.id) }}" class="btn btn-secondary">Preview</a>
+        <a href="{{ url_for('questions.export_pdf', set_id=question_set.id) }}" class="btn btn-primary">Download PDF</a>
+        <a href="{{ url_for('questions.question_bank') }}" class="btn btn-ghost">Back</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Questions
+    </div>
+
+    {% for q in questions %}
+    <div class="question-item">
+        <div class="question-meta">
+            <span class="question-number">Q{{ q.question_number }}</span>
+            <span class="badge badge-{{ q.question_type }}">{{ q.question_type|replace('_', ' ')|title }}</span>
+            <span class="question-marks">{{ q.marks }} mark{% if q.marks > 1 %}s{% endif %}</span>
+        </div>
+        <div class="question-content">
+            <p class="question-text">{{ q.question_text }}</p>
+
+            {% if q.image_url %}
+            <img src="{{ q.image_url }}" alt="Question image" class="question-image">
+            {% endif %}
+
+            {% if q.question_type == 'mcq' and q.options %}
+            <div class="options-list">
+                {% for opt in q.options %}
+                <div class="option {% if loop.index0 == q.correct_answer|int %}correct{% endif %}">
+                    <span class="option-letter">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}</span>
+                    <span>{{ opt }}</span>
+                    {% if loop.index0 == q.correct_answer|int %}
+                    <svg class="check-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="answer-box">
+                <strong>Answer:</strong> {{ q.correct_answer }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.question-item {
+    padding: var(--spacing-l);
+    border-bottom: 1px solid var(--neutral-gray-6);
+}
+
+.question-item:last-child {
+    border-bottom: none;
+}
+
+.question-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-m);
+    margin-bottom: var(--spacing-m);
+}
+
+.question-number {
+    font-weight: 700;
+    color: var(--azure-blue);
+}
+
+.question-marks {
+    margin-left: auto;
+    color: var(--neutral-gray-50);
+    font-size: 0.875rem;
+}
+
+.question-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: var(--spacing-m);
+}
+
+.question-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-medium);
+    margin-bottom: var(--spacing-m);
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-s);
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-m);
+    padding: var(--spacing-m);
+    background: var(--neutral-gray-2);
+    border-radius: var(--radius-medium);
+    border: 1px solid var(--neutral-gray-6);
+}
+
+.option.correct {
+    background: var(--success-bg);
+    border-color: var(--success);
+}
+
+.option-letter {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--neutral-white);
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.option.correct .option-letter {
+    background: var(--success);
+    color: white;
+}
+
+.check-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--success);
+    margin-left: auto;
+}
+
+.answer-box {
+    padding: var(--spacing-m);
+    background: var(--success-bg);
+    border-radius: var(--radius-medium);
+    color: var(--success);
+}
+
+.badge-mcq { background: var(--azure-light-blue); color: var(--azure-blue); }
+.badge-fill_blank { background: #E8F5E9; color: #388E3C; }
+.badge-written { background: #FFF3E0; color: #E65100; }
+.badge-matching { background: #EDE7F6; color: #7B1FA2; }
+.badge-labeling { background: #FCE4EC; color: #C2185B; }
+</style>
+{% endblock %}

@@ -1,0 +1,11 @@
+{# Admin Navigation Component - Desktop #}
+{# Usage: {% include 'components/nav_admin.html' with context %} #}
+{# Required: active_page variable (e.g., 'dashboard', 'questions', 'students', etc.) #}
+
+<a href="{{ url_for('admin.dashboard') }}" {% if active_page == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+<a href="{{ url_for('questions.question_bank') }}" {% if active_page == 'questions' %}class="active"{% endif %}>Questions</a>
+<a href="{{ url_for('admin.students') }}" {% if active_page == 'students' %}class="active"{% endif %}>Students</a>
+<a href="{{ url_for('admin.exams') }}" {% if active_page == 'exams' %}class="active"{% endif %}>Exams</a>
+<a href="{{ url_for('admin.grading') }}" {% if active_page == 'grading' %}class="active"{% endif %}>Grading</a>
+<a href="{{ url_for('admin.reports') }}" {% if active_page == 'reports' %}class="active"{% endif %}>Reports</a>
+<a href="{{ url_for('settings.settings_page') }}" {% if active_page == 'settings' %}class="active"{% endif %}>Settings</a>

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exam.student_name }}'s Results - {{ exam.exam_title }} - {{ app_name }}{% endblock %}
+
+{% block nav_items %}
+<a href="/">Home</a>
+{% endblock %}
+
+{% block mobile_nav %}
+<a href="/">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="shared-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+    </svg>
+    <span>Shared Exam Results</span>
+</div>
+
+<div class="card mb-2">
+    <div class="card-body">
+        <h1 class="page-title text-center">{{ exam.exam_title }}</h1>
+        <p class="page-subtitle text-center">{{ exam.subject_name }} - {{ exam.student_name }}</p>
+
+        <div class="score-display">
+            <div class="score-value {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}">
+                {{ "%.0f"|format(exam.percentage or 0) }}%
+            </div>
+            <div class="score-label">
+                {{ exam.total_score or 0 }} / {{ exam.max_score }} marks
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+            {% if exam.percentage >= 80 %}
+            <span style="font-size: 1.5rem; color: var(--success);">Excellent work!</span>
+            {% elif exam.percentage >= 60 %}
+            <span style="font-size: 1.5rem; color: var(--azure-blue);">Good job!</span>
+            {% elif exam.percentage >= 40 %}
+            <span style="font-size: 1.5rem; color: #835C00;">Keep practicing!</span>
+            {% else %}
+            <span style="font-size: 1.5rem; color: var(--danger);">Keep trying!</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<h2 style="font-size: 1.25rem; margin-bottom: 1rem;">Question Review</h2>
+
+{% for question in questions %}
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">Q{{ question.question_number }}</span>
+        <span class="question-marks" style="{% if question.marks_awarded == question.marks %}color: var(--success);{% elif question.marks_awarded > 0 %}color: #835C00;{% else %}color: var(--danger);{% endif %}">
+            {{ question.marks_awarded or 0 }} / {{ question.marks }} marks
+        </span>
+    </div>
+    <div class="question-body">
+        <div class="question-text">{{ question.question_text }}</div>
+
+        {% if question.image_url %}
+        <img src="{{ question.image_url }}" alt="Question image" style="max-width: 100%; border-radius: 8px; margin: 1rem 0;">
+        {% endif %}
+
+        {% if question.question_type == 'mcq' %}
+        <div class="mcq-options">
+            {% for option in question.options %}
+            <div class="mcq-option {% if option == question.correct_answer %}correct{% elif option == question.student_answer and option != question.correct_answer %}incorrect{% endif %}" style="cursor: default;">
+                <div class="mcq-radio" style="{% if option == question.student_answer %}background: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %}; border-color: {% if option == question.correct_answer %}var(--success){% else %}var(--danger){% endif %};{% endif %}"></div>
+                <span>{{ option }}</span>
+                {% if option == question.correct_answer %}
+                <span style="margin-left: auto; color: var(--success); font-weight: 500;">Correct</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="margin-top: 1rem;">
+            <div style="margin-bottom: 0.75rem;">
+                <div class="form-label">Student's Answer:</div>
+                <div style="padding: 0.75rem; background: var(--gray-100); border-radius: var(--radius);">
+                    {{ question.student_answer or 'No answer provided' }}
+                </div>
+            </div>
+            <div>
+                <div class="form-label">Correct Answer:</div>
+                <div style="padding: 0.75rem; background: #DFF6DD; border-radius: var(--radius); color: var(--success);">
+                    {{ question.correct_answer }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<div class="shared-footer">
+    <p>Shared from {{ app_name }}</p>
+    <p class="school-name">{{ school_name }}</p>
+</div>
+
+<style>
+.shared-banner {
+    background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius-large);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+.shared-banner svg {
+    width: 20px;
+    height: 20px;
+}
+.score-display {
+    text-align: center;
+    padding: 2rem 0 1rem;
+}
+.score-value {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.score-label {
+    font-size: 1rem;
+    color: var(--neutral-gray-50);
+    margin-top: 0.5rem;
+}
+.score-excellent { color: #107C10; }
+.score-good { color: var(--azure-blue); }
+.score-average { color: #835C00; }
+.score-poor { color: var(--error); }
+.shared-footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    margin-top: 2rem;
+    border-top: 1px solid var(--neutral-gray-6);
+    color: var(--neutral-gray-50);
+}
+.shared-footer .school-name {
+    font-weight: 600;
+    color: var(--azure-blue);
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %}

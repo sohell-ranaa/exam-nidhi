@@ -1,0 +1,130 @@
+{# Print Question Component - Spring Gate Format #}
+{# Usage: {% include 'components/print_question.html' %} #}
+{# Required: question (object), show_answers (boolean) #}
+
+<div class="print-question">
+    <div class="question-row">
+        <span class="q-number">{{ question.question_number }}.</span>
+        <div class="q-content">
+            <span class="q-text">{{ question.question_text }}</span>
+        </div>
+    </div>
+
+    {% if question.image_url %}
+    <div class="q-image">
+        <img src="{{ question.image_url }}" alt="Question diagram">
+    </div>
+    {% endif %}
+
+    {# Multiple Choice Questions #}
+    {% if question.question_type == 'multiple_choice' or question.question_type == 'mcq' %}
+    <div class="mcq-options-print">
+        {% for option in question.options %}
+        <div class="mcq-row {% if show_answers and option == question.correct_answer %}correct-answer{% endif %}">
+            <span class="option-letter">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}.</span>
+            <span class="option-content">{{ option }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="answer-row">
+        <span class="answer-label">Answer:</span>
+        <span class="dotted-line"></span>
+        <span class="marks-bracket">[{{ question.marks }}]</span>
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Correct Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+
+    {# Fill in the Blank / Short Answer #}
+    {% elif question.question_type in ['fill_in_blank', 'fill_blank', 'short_answer'] %}
+    <div class="answer-row">
+        <span class="dotted-line long"></span>
+        <span class="marks-bracket">[{{ question.marks }}]</span>
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+
+    {# True/False #}
+    {% elif question.question_type == 'true_false' %}
+    <div class="tf-options">
+        <span class="tf-option {% if show_answers and question.correct_answer|lower == 'true' %}correct-answer{% endif %}">True</span>
+        <span class="tf-divider">/</span>
+        <span class="tf-option {% if show_answers and question.correct_answer|lower == 'false' %}correct-answer{% endif %}">False</span>
+    </div>
+    <div class="answer-row">
+        <span class="dotted-line"></span>
+        <span class="marks-bracket">[{{ question.marks }}]</span>
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+
+    {# Written / Long Answer #}
+    {% elif question.question_type == 'written' %}
+    <div class="written-lines">
+        {% set line_count = question.marks * 2 %}
+        {% for i in range(line_count|int) %}
+        <div class="write-line">
+            <span class="dotted-line full"></span>
+            {% if loop.last %}
+            <span class="marks-bracket">[{{ question.marks }}]</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Model Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+
+    {# Sub-questions (like 3a, 3b, 3c) #}
+    {% elif question.question_type == 'multi_part' and question.sub_questions %}
+    {% for sub in question.sub_questions %}
+    <div class="sub-question">
+        <span class="sub-letter">{{ ['a', 'b', 'c', 'd', 'e'][loop.index0] }}.</span>
+        <span class="sub-text">{{ sub.text }}</span>
+        <span class="dotted-line"></span>
+        <span class="marks-bracket">[{{ sub.marks }}]</span>
+    </div>
+    {% endfor %}
+
+    {# Calculation questions - more space #}
+    {% elif question.question_type == 'calculation' %}
+    <div class="calc-space">
+        {% for i in range(3) %}
+        <div class="write-line">
+            <span class="dotted-line full"></span>
+        </div>
+        {% endfor %}
+        <div class="write-line">
+            <span class="dotted-line full"></span>
+            <span class="marks-bracket">[{{ question.marks }}]</span>
+        </div>
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+
+    {# Default - single answer line #}
+    {% else %}
+    <div class="answer-row">
+        <span class="dotted-line"></span>
+        <span class="marks-bracket">[{{ question.marks }}]</span>
+    </div>
+    {% if show_answers %}
+    <div class="model-answer">
+        <strong>Answer:</strong> {{ question.correct_answer }}
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
