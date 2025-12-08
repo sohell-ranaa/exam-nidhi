@@ -216,28 +216,56 @@
     </div>
 </form>
 
-<!-- Submit Modal -->
+<!-- Submit Modal - Revamped -->
 <div class="modal-overlay" id="submit-modal">
-    <div class="modal">
-        <div class="modal-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Submit Exam?
-        </div>
-        <div class="modal-body">
-            <p><strong>Warning:</strong> You cannot change your answers after submission.</p>
-            <div class="submit-stats" id="submitStats"></div>
-            <div class="confirm-checkbox" style="margin-top: 16px; padding: 12px; background: #FFF4CE; border-radius: 8px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.875rem;">
-                    <input type="checkbox" id="confirmCheck" style="width: 18px; height: 18px; cursor: pointer;">
-                    <span>I confirm I want to submit my exam</span>
-                </label>
+    <div class="submit-modal">
+        <!-- Header with Icon -->
+        <div class="submit-modal-header">
+            <div class="submit-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
+            <h2>Ready to Submit?</h2>
+            <p>Let's check your work before finishing</p>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Review Answers</button>
-            <button class="btn btn-primary" onclick="confirmSubmit()" id="confirmBtn" disabled>Submit</button>
+
+        <!-- Stats Cards -->
+        <div class="submit-modal-body">
+            <div class="submit-stats-grid" id="submitStats">
+                <!-- Filled by JavaScript -->
+            </div>
+
+            <!-- Warning Banner -->
+            <div class="submit-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>You can't change answers after submitting!</span>
+            </div>
+
+            <!-- Confirm Checkbox -->
+            <label class="submit-confirm">
+                <input type="checkbox" id="confirmCheck">
+                <span class="checkmark"></span>
+                <span class="confirm-text">I'm ready to submit my exam</span>
+            </label>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="submit-modal-footer">
+            <button type="button" class="submit-btn-secondary" onclick="closeModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+                Review Answers
+            </button>
+            <button type="button" class="submit-btn-primary" onclick="confirmSubmit()" id="confirmBtn" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 13l4 4L19 7"/>
+                </svg>
+                Submit Exam
+            </button>
         </div>
     </div>
 </div>
@@ -809,15 +837,314 @@
 .submit-stats-label {
     color: var(--neutral-gray-50);
 }
-.submit-stats-value {
+/* ============================================
+   SUBMIT MODAL - Revamped Design
+   ============================================ */
+.submit-modal {
+    background: white;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.submit-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.submit-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.submit-icon svg {
+    width: 32px;
+    height: 32px;
+    stroke: white;
+}
+
+.submit-modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+}
+
+.submit-modal-header p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.submit-modal-body {
+    padding: 24px;
+}
+
+.submit-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.submit-stat-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.submit-stat-card.success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #c3e6cb;
+}
+
+.submit-stat-card.warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border-color: #ffeeba;
+}
+
+.submit-stat-card.danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #f5c6cb;
+}
+
+.submit-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+.submit-stat-card.success .submit-stat-value { color: #155724; }
+.submit-stat-card.warning .submit-stat-value { color: #856404; }
+.submit-stat-card.danger .submit-stat-value { color: #721c24; }
+
+.submit-stat-label {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.submit-warning {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border: 1px solid #ffc107;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.submit-warning svg {
+    width: 24px;
+    height: 24px;
+    stroke: #856404;
+    flex-shrink: 0;
+}
+
+.submit-warning span {
+    font-size: 0.875rem;
+    color: #856404;
+    font-weight: 500;
+}
+
+.submit-confirm {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #e8f4fd 0%, #d4e8f8 100%);
+    border: 2px solid #b8daff;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.submit-confirm:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #e0e8ff 0%, #d0d8f8 100%);
+}
+
+.submit-confirm input[type="checkbox"] {
+    display: none;
+}
+
+.submit-confirm .checkmark {
+    width: 26px;
+    height: 26px;
+    border: 2px solid #b8daff;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.submit-confirm .checkmark::after {
+    content: '';
+    width: 8px;
+    height: 14px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.2s;
+}
+
+.submit-confirm input:checked + .checkmark {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+}
+
+.submit-confirm input:checked + .checkmark::after {
+    transform: rotate(45deg) scale(1);
+}
+
+.submit-confirm .confirm-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.submit-modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px 24px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.submit-btn-secondary,
+.submit-btn-primary {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 0.95rem;
     font-weight: 600;
-    color: var(--neutral-gray-80);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
 }
-.submit-stats-value.warning {
-    color: #835C00;
+
+.submit-btn-secondary svg,
+.submit-btn-primary svg {
+    width: 18px;
+    height: 18px;
 }
-.submit-stats-value.success {
-    color: var(--success);
+
+.submit-btn-secondary {
+    background: white;
+    color: #666;
+    border: 2px solid #dee2e6;
+}
+
+.submit-btn-secondary:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+    color: #333;
+}
+
+.submit-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.submit-btn-primary:disabled {
+    background: #dee2e6;
+    color: #adb5bd;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .submit-modal {
+        max-width: 100%;
+        margin: 16px;
+        border-radius: 20px;
+    }
+
+    .submit-modal-header {
+        padding: 24px 20px;
+    }
+
+    .submit-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .submit-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .submit-modal-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .submit-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .submit-stat-card {
+        padding: 12px 8px;
+    }
+
+    .submit-stat-value {
+        font-size: 1.4rem;
+    }
+
+    .submit-modal-footer {
+        flex-direction: column;
+    }
+
+    .submit-btn-secondary,
+    .submit-btn-primary {
+        width: 100%;
+    }
 }
 </style>
 {% endblock %}
@@ -1052,26 +1379,27 @@ function updateProgress() {
 function submitExam() {
     const answered = updateProgress();
     const unanswered = totalQuestions - answered;
+    const percentage = Math.round((answered / totalQuestions) * 100);
+
+    // Determine card states based on values
+    const totalClass = '';
+    const answeredClass = answered === totalQuestions ? 'success' : (answered > 0 ? 'success' : '');
+    const unansweredClass = unanswered > 0 ? (unanswered > totalQuestions / 2 ? 'danger' : 'warning') : 'success';
 
     let statsHtml = `
-        <div class="submit-stats-row">
-            <span class="submit-stats-label">Total Questions</span>
-            <span class="submit-stats-value">${totalQuestions}</span>
+        <div class="submit-stat-card">
+            <div class="submit-stat-value">${totalQuestions}</div>
+            <div class="submit-stat-label">Total</div>
         </div>
-        <div class="submit-stats-row">
-            <span class="submit-stats-label">Answered</span>
-            <span class="submit-stats-value success">${answered}</span>
+        <div class="submit-stat-card ${answeredClass}">
+            <div class="submit-stat-value">${answered}</div>
+            <div class="submit-stat-label">Answered</div>
+        </div>
+        <div class="submit-stat-card ${unansweredClass}">
+            <div class="submit-stat-value">${unanswered}</div>
+            <div class="submit-stat-label">Skipped</div>
         </div>
     `;
-
-    if (unanswered > 0) {
-        statsHtml += `
-            <div class="submit-stats-row">
-                <span class="submit-stats-label">Unanswered</span>
-                <span class="submit-stats-value warning">${unanswered}</span>
-            </div>
-        `;
-    }
 
     document.getElementById('submitStats').innerHTML = statsHtml;
     document.getElementById('submit-modal').classList.add('active');
@@ -1092,7 +1420,12 @@ document.getElementById('confirmCheck').addEventListener('change', function() {
 async function confirmSubmit() {
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
-    btn.textContent = 'Submitting...';
+    btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;animation:spin 1s linear infinite">
+            <path d="M12 2v4m0 12v4m-8-10H2m20 0h-4m-2.93-6.07L15.66 7.34M8.34 16.66l-1.41 1.41M16.66 16.66l1.41 1.41M7.34 7.34L5.93 5.93"/>
+        </svg>
+        Submitting...
+    `;
 
     const answers = [];
     document.querySelectorAll('.question-card').forEach(card => {

@@ -616,10 +616,27 @@ def assign_exam():
         deadline = data.get('deadline')
         send_email = data.get('send_email', True)
 
-        # If exam_datetime is provided, use it as the scheduled start time
-        # Store it in deadline field for now (since scheduled_at may not exist)
-        if exam_datetime and not deadline:
-            deadline = exam_datetime
+        # Parse scheduled_at from exam_datetime
+        scheduled_at = None
+        if exam_datetime:
+            try:
+                scheduled_at = datetime.strptime(exam_datetime, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                try:
+                    scheduled_at = datetime.strptime(exam_datetime, '%Y-%m-%d %H:%M')
+                except ValueError:
+                    pass
+
+        # Validate: scheduled time must be now or in the future
+        now = datetime.now()
+        if scheduled_at and scheduled_at < now:
+            return jsonify({'success': False, 'error': 'Exam date and time must be in the future'}), 400
+
+        # Validate: exam_date must be today or in the future
+        if exam_date:
+            exam_date_obj = datetime.strptime(exam_date, '%Y-%m-%d').date()
+            if exam_date_obj < date.today():
+                return jsonify({'success': False, 'error': 'Exam date must be today or in the future'}), 400
 
         if not student_id or not question_set_id:
             return jsonify({'success': False, 'error': 'Student and exam are required'}), 400
@@ -644,11 +661,11 @@ def assign_exam():
             cursor.execute("SELECT * FROM users WHERE id = %s", (student_id,))
             student = cursor.fetchone()
 
-            # Create practice exam
+            # Create practice exam with scheduled_at
             cursor.execute("""
-                INSERT INTO practice_exams (student_id, question_set_id, exam_date, deadline, max_score, status)
-                VALUES (%s, %s, %s, %s, %s, 'pending')
-            """, (student_id, question_set_id, exam_date, deadline if deadline else None, max_score))
+                INSERT INTO practice_exams (student_id, question_set_id, exam_date, scheduled_at, deadline, max_score, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+            """, (student_id, question_set_id, exam_date, scheduled_at, deadline if deadline else None, max_score))
 
             conn.commit()
             exam_id = cursor.lastrowid

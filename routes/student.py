@@ -63,17 +63,57 @@ def dashboard():
         """, (student_id,))
         stats = cursor.fetchone()
 
-        # Format dates and check schedule
+        # Format dates and calculate status indicators
         now = datetime.now()
         for exam in pending_exams:
             if exam['exam_date']:
                 exam['exam_date_formatted'] = exam['exam_date'].strftime('%d %b %Y')
-            if exam.get('scheduled_at'):
+
+            # Calculate display status based on schedule and current state
+            if exam['status'] == 'in_progress':
+                exam['display_status'] = 'in_progress'
+                exam['status_text'] = 'Continue'
+                exam['status_color'] = 'blue'
+                exam['is_available'] = True
+                exam['is_scheduled'] = False
+            elif exam.get('scheduled_at'):
                 exam['scheduled_time'] = exam['scheduled_at'].strftime('%H:%M')
                 exam['is_scheduled'] = True
-                exam['is_available'] = exam['scheduled_at'] <= now
+                scheduled = exam['scheduled_at']
+
+                if scheduled <= now:
+                    # Exam time has passed, available to start
+                    exam['display_status'] = 'ready'
+                    exam['status_text'] = 'Start Now'
+                    exam['status_color'] = 'green'
+                    exam['is_available'] = True
+                else:
+                    # Exam scheduled for future
+                    time_until = (scheduled - now).total_seconds()
+                    if time_until <= 3600:  # Within 1 hour
+                        minutes = int(time_until / 60)
+                        exam['display_status'] = 'soon'
+                        exam['status_text'] = f'Starts in {minutes}m'
+                        exam['status_color'] = 'orange'
+                        exam['is_available'] = False
+                    elif time_until <= 86400:  # Within 24 hours
+                        hours = int(time_until / 3600)
+                        exam['display_status'] = 'today'
+                        exam['status_text'] = f'In {hours}h'
+                        exam['status_color'] = 'purple'
+                        exam['is_available'] = False
+                    else:
+                        # More than 24 hours away
+                        exam['display_status'] = 'scheduled'
+                        exam['status_text'] = exam['scheduled_time']
+                        exam['status_color'] = 'gray'
+                        exam['is_available'] = False
             else:
+                # No schedule, available anytime
                 exam['is_scheduled'] = False
+                exam['display_status'] = 'ready'
+                exam['status_text'] = 'Start'
+                exam['status_color'] = 'green'
                 exam['is_available'] = True
 
         for exam in completed_exams:

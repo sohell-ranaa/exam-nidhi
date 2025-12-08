@@ -6,19 +6,312 @@
 {% block nav_items %}{% include 'components/nav_student.html' %}{% endblock %}
 {% block mobile_nav %}{% include 'components/nav_student_mobile.html' %}{% endblock %}
 
-{% block content %}
-<h1 class="page-title">Hello, {{ user.full_name }}!</h1>
-<p class="page-subtitle">Ready for today's practice?</p>
+{% block extra_css %}
+<style>
+/* Welcome Header */
+.welcome-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.welcome-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+.welcome-header p {
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
 
+/* Stats Grid - Colorful */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+@media (min-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #eee;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+.stat-card:nth-child(1)::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+.stat-card:nth-child(2)::before { background: linear-gradient(90deg, #f093fb, #f5576c); }
+.stat-card:nth-child(3)::before { background: linear-gradient(90deg, #4facfe, #00f2fe); }
+.stat-card:nth-child(4)::before { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+}
+.stat-label {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-title svg {
+    width: 20px;
+    height: 20px;
+}
+.section-help {
+    font-size: 0.75rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: help;
+}
+
+/* Filters */
+.filters-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.filter-chip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.filter-chip:hover {
+    border-color: #667eea;
+}
+.filter-chip.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
+/* Exam Cards */
+.exam-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #eee;
+    transition: all 0.2s;
+}
+.exam-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-1px);
+}
+.exam-card.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.exam-card.disabled:hover {
+    border-color: #eee;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Subject Icons - Colorful */
+.subject-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.subject-icon.english { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.subject-icon.mathematics { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+.subject-icon.ict { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+.subject-icon.science { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+.subject-icon.eng { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.subject-icon.mat { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+.subject-icon.sci { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+
+.exam-content {
+    flex: 1;
+    min-width: 0;
+}
+.exam-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 2px;
+}
+.exam-meta {
+    font-size: 0.8rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.exam-meta .dot {
+    width: 3px;
+    height: 3px;
+    background: #ccc;
+    border-radius: 50%;
+}
+
+/* Status Badges - Colorful */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.status-badge.green {
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    color: #006644;
+}
+.status-badge.blue {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #004466;
+}
+.status-badge.orange {
+    background: linear-gradient(135deg, #fa709a, #fee140);
+    color: #663300;
+    animation: pulse-badge 2s infinite;
+}
+.status-badge.purple {
+    background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+    color: #4a0066;
+}
+.status-badge.gray {
+    background: #f0f0f0;
+    color: #666;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Score Badges */
+.score-badge {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.score-badge.excellent { color: #10b981; }
+.score-badge.good { color: #3b82f6; }
+.score-badge.average { color: #f59e0b; }
+.score-badge.poor { color: #ef4444; }
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+.empty-state svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+.empty-state p {
+    font-size: 0.9rem;
+}
+
+/* Help Tooltip */
+.help-tooltip {
+    position: relative;
+    display: inline-flex;
+}
+.help-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background: #333;
+    color: white;
+    text-align: left;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    position: absolute;
+    z-index: 100;
+    right: 0;
+    top: 100%;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    line-height: 1.4;
+}
+.help-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Card Container */
+.card-container {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #eee;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="welcome-header">
+    <h1>Hello, {{ user.full_name }}!</h1>
+    <p>Ready for today's practice? Let's learn something new!</p>
+</div>
+
+<!-- Stats Grid -->
 {% if stats and stats.total_exams %}
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-value">{{ stats.total_exams }}</div>
-        <div class="stat-label">Exams Completed</div>
+        <div class="stat-label">Exams Done</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ "%.0f"|format(stats.avg_score or 0) }}%</div>
-        <div class="stat-label">Average Score</div>
+        <div class="stat-label">Average</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ "%.0f"|format(stats.best_score or 0) }}%</div>
@@ -26,38 +319,64 @@
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ pending_exams|length }}</div>
-        <div class="stat-label">Pending Exams</div>
+        <div class="stat-label">To Do</div>
     </div>
 </div>
 {% endif %}
 
-<div class="card mb-2">
-    <div class="card-header">Pending Exams</div>
+<!-- Pending Exams -->
+<div class="card-container">
+    <div class="section-header">
+        <div class="section-title">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Pending Exams
+        </div>
+        <div class="help-tooltip">
+            <span class="section-help">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Help
+            </span>
+            <div class="tooltip-text">
+                <strong>Status Colors:</strong><br>
+                🟢 Green = Ready to start<br>
+                🔵 Blue = In progress<br>
+                🟠 Orange = Starting soon<br>
+                🟣 Purple = Later today<br>
+                ⚪ Gray = Scheduled
+            </div>
+        </div>
+    </div>
+
     {% if pending_exams %}
-    <div>
+    <!-- Filter Chips -->
+    <div class="filters-row">
+        <button class="filter-chip active" data-filter="all">All ({{ pending_exams|length }})</button>
+        <button class="filter-chip" data-filter="ready">Ready</button>
+        <button class="filter-chip" data-filter="scheduled">Scheduled</button>
+    </div>
+
+    <div id="exam-list">
         {% for exam in pending_exams %}
-        <a href="{% if exam.is_available %}{{ url_for('student.take_exam', exam_id=exam.id) }}{% else %}#{% endif %}" class="list-item" style="text-decoration: none; color: inherit; {% if not exam.is_available %}opacity: 0.7; cursor: not-allowed;{% endif %}">
-            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+        <a href="{% if exam.is_available %}{{ url_for('student.take_exam', exam_id=exam.id) }}{% else %}javascript:void(0){% endif %}"
+           class="exam-card {% if not exam.is_available %}disabled{% endif %}"
+           data-status="{{ exam.display_status }}"
+           {% if not exam.is_available %}onclick="showScheduleMessage('{{ exam.status_text }}')"{% endif %}>
+            <div class="subject-icon {{ exam.subject_code|lower }}">
                 {{ exam.subject_name[0] }}
             </div>
-            <div class="list-item-content">
-                <div class="list-item-title">{{ exam.exam_title }}</div>
-                <div class="list-item-subtitle">
-                    {{ exam.subject_name }} - {{ exam.exam_date_formatted }}
+            <div class="exam-content">
+                <div class="exam-title">{{ exam.exam_title }}</div>
+                <div class="exam-meta">
+                    <span>{{ exam.subject_name }}</span>
+                    <span class="dot"></span>
+                    <span>{{ exam.exam_date_formatted }}</span>
                     {% if exam.is_scheduled %}
-                    <span style="color: #0078D4; font-weight: 600;"> @ {{ exam.scheduled_time }}</span>
+                    <span class="dot"></span>
+                    <span style="color: #667eea; font-weight: 500;">{{ exam.scheduled_time }}</span>
                     {% endif %}
                 </div>
             </div>
-            <div class="list-item-action">
-                {% if exam.status == 'in_progress' %}
-                <span class="badge badge-progress">Continue</span>
-                {% elif not exam.is_available %}
-                <span class="badge" style="background: #FFB900; color: #000;">{{ exam.scheduled_time }}</span>
-                {% else %}
-                <span class="badge badge-pending">Start</span>
-                {% endif %}
-            </div>
+            <span class="status-badge {{ exam.status_color }}">{{ exam.status_text }}</span>
         </a>
         {% endfor %}
     </div>
@@ -69,32 +388,82 @@
     {% endif %}
 </div>
 
-<div class="card">
-    <div class="card-header">Recent Results</div>
+<!-- Recent Results -->
+<div class="card-container">
+    <div class="section-header">
+        <div class="section-title">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Recent Results
+        </div>
+        {% if completed_exams %}
+        <a href="{{ url_for('student.my_exams') }}" class="section-help" style="text-decoration: none;">
+            View All →
+        </a>
+        {% endif %}
+    </div>
+
     {% if completed_exams %}
     <div>
         {% for exam in completed_exams %}
-        <a href="{{ url_for('student.view_results', exam_id=exam.id) }}" class="list-item" style="text-decoration: none; color: inherit;">
-            <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
+        <a href="{{ url_for('student.view_results', exam_id=exam.id) }}" class="exam-card">
+            <div class="subject-icon {{ exam.subject_code|lower }}">
                 {{ exam.subject_name[0] }}
             </div>
-            <div class="list-item-content">
-                <div class="list-item-title">{{ exam.exam_title }}</div>
-                <div class="list-item-subtitle">{{ exam.subject_name }} - {{ exam.released_at }}</div>
+            <div class="exam-content">
+                <div class="exam-title">{{ exam.exam_title }}</div>
+                <div class="exam-meta">
+                    <span>{{ exam.subject_name }}</span>
+                    <span class="dot"></span>
+                    <span>{{ exam.released_at }}</span>
+                </div>
             </div>
-            <div class="list-item-action">
-                <span class="stat-value {% if exam.percentage >= 80 %}score-excellent{% elif exam.percentage >= 60 %}score-good{% elif exam.percentage >= 40 %}score-average{% else %}score-poor{% endif %}" style="font-size: 1.25rem;">
-                    {{ "%.0f"|format(exam.percentage or 0) }}%
-                </span>
-            </div>
+            <span class="score-badge {% if exam.percentage >= 80 %}excellent{% elif exam.percentage >= 60 %}good{% elif exam.percentage >= 40 %}average{% else %}poor{% endif %}">
+                {{ "%.0f"|format(exam.percentage or 0) }}%
+            </span>
         </a>
         {% endfor %}
     </div>
     {% else %}
     <div class="empty-state">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <p>No completed exams yet</p>
+        <p>Complete your first exam to see results here!</p>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functionality
+document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        // Update active state
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const filter = chip.dataset.filter;
+        const cards = document.querySelectorAll('.exam-card');
+
+        cards.forEach(card => {
+            const status = card.dataset.status;
+            if (filter === 'all') {
+                card.style.display = 'flex';
+            } else if (filter === 'ready') {
+                card.style.display = (status === 'ready' || status === 'in_progress') ? 'flex' : 'none';
+            } else if (filter === 'scheduled') {
+                card.style.display = (status === 'scheduled' || status === 'soon' || status === 'today') ? 'flex' : 'none';
+            }
+        });
+    });
+});
+
+// Show schedule message for locked exams
+function showScheduleMessage(statusText) {
+    if (typeof showToast === 'function') {
+        showToast(`This exam is scheduled: ${statusText}`, 'info');
+    } else {
+        alert(`This exam is scheduled: ${statusText}`);
+    }
+}
+</script>
 {% endblock %}

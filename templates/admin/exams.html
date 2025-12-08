@@ -638,10 +638,46 @@ $(document).ready(function() {
         containerCssClass: 'select2-container--small'
     });
 
-    // Set today's date as default
-    document.getElementById('exam-date').value = new Date().toISOString().split('T')[0];
-    // Set default time to 9:00 AM
-    document.getElementById('exam-time').value = '09:00';
+    // Set today's date as default and minimum
+    const today = new Date().toISOString().split('T')[0];
+    const examDateInput = document.getElementById('exam-date');
+    const examTimeInput = document.getElementById('exam-time');
+
+    examDateInput.value = today;
+    examDateInput.min = today;  // Prevent selecting past dates
+
+    // Set default time to next hour (rounded up)
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+    const defaultTime = nextHour.getHours().toString().padStart(2, '0') + ':00';
+    examTimeInput.value = defaultTime;
+
+    // Validate time when date is today
+    function validateDateTime() {
+        const selectedDate = examDateInput.value;
+        const selectedTime = examTimeInput.value;
+
+        if (selectedDate === today) {
+            const now = new Date();
+            const [hours, minutes] = selectedTime.split(':').map(Number);
+            const selectedDateTime = new Date();
+            selectedDateTime.setHours(hours, minutes, 0, 0);
+
+            if (selectedDateTime <= now) {
+                // Time is in the past, set to next valid time
+                const nextValid = new Date(now);
+                nextValid.setMinutes(nextValid.getMinutes() + 15);
+                const validTime = nextValid.getHours().toString().padStart(2, '0') + ':' +
+                                  (Math.ceil(nextValid.getMinutes() / 5) * 5).toString().padStart(2, '0');
+                examTimeInput.value = validTime;
+                showToast('Time adjusted - must be in the future', 'info');
+            }
+        }
+    }
+
+    examDateInput.addEventListener('change', validateDateTime);
+    examTimeInput.addEventListener('change', validateDateTime);
 });
 
 // Store all question sets for filtering
@@ -713,6 +749,14 @@ document.getElementById('assign-form').addEventListener('submit', async (e) => {
 
     if (!studentId || !questionSetId) {
         showToast('Please select a student and question set', 'error');
+        return;
+    }
+
+    // Validate date/time is not in the past
+    const now = new Date();
+    const selectedDateTime = new Date(`${examDate}T${examTime}:00`);
+    if (selectedDateTime < now) {
+        showToast('Exam date and time must be in the future', 'error');
         return;
     }
 
@@ -902,12 +946,21 @@ async function openPreviewModal(examId) {
             const editSection = document.getElementById('edit-schedule-section');
             if (exam.status === 'pending') {
                 editSection.style.display = 'block';
+                const editDateInput = document.getElementById('modal-edit-date');
+                const editTimeInput = document.getElementById('modal-edit-time');
+
+                // Set minimum date to today
+                const today = new Date().toISOString().split('T')[0];
+                editDateInput.min = today;
+
                 // Set date and time values
                 if (exam.exam_date_raw) {
-                    document.getElementById('modal-edit-date').value = exam.exam_date_raw;
+                    editDateInput.value = exam.exam_date_raw;
+                } else {
+                    editDateInput.value = today;
                 }
                 // Keep existing scheduled_time, don't default to 09:00
-                document.getElementById('modal-edit-time').value = exam.scheduled_time || '';
+                editTimeInput.value = exam.scheduled_time || '';
             } else {
                 editSection.style.display = 'none';
             }
@@ -1021,6 +1074,14 @@ async function saveSchedule() {
 
     if (!newDate) {
         showToast('Please select a date', 'error');
+        return;
+    }
+
+    // Validate date/time is not in the past
+    const now = new Date();
+    const selectedDateTime = new Date(`${newDate}T${newTime}:00`);
+    if (selectedDateTime < now) {
+        showToast('Exam date and time must be in the future', 'error');
         return;
     }
 
