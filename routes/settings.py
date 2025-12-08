@@ -14,7 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import role_required, AuditLogger
+from src.core.auth import role_required, AuditLogger, get_client_ip
 from src.core.email import EmailSettings, EmailService
 from src.core.cache import get_cache
 from dbs.connection import get_connection
@@ -196,7 +196,7 @@ def smtp_settings():
 
             AuditLogger.log_action(request.current_user['id'], 'smtp_settings_updated',
                                   resource_type='settings',
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'SMTP settings saved'}), 200
 
@@ -247,7 +247,7 @@ def send_test_email():
             AuditLogger.log_action(request.current_user['id'], 'test_email_sent',
                                   resource_type='settings',
                                   details={'to_email': to_email},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
         return jsonify({'success': success, 'message': message}), 200
 
@@ -283,7 +283,7 @@ def marking_settings():
             AuditLogger.log_action(request.current_user['id'], 'marking_settings_updated',
                                   resource_type='settings',
                                   details={'thresholds': thresholds, 'labels': labels},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Marking settings saved'}), 200
 
@@ -319,7 +319,7 @@ def exam_settings():
 
             AuditLogger.log_action(request.current_user['id'], 'exam_settings_updated',
                                   resource_type='settings',
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Exam settings saved'}), 200
 
@@ -349,7 +349,7 @@ def notification_settings():
 
             AuditLogger.log_action(request.current_user['id'], 'notification_settings_updated',
                                   resource_type='settings',
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Notification settings saved'}), 200
 
@@ -379,7 +379,7 @@ def display_settings():
 
             AuditLogger.log_action(request.current_user['id'], 'display_settings_updated',
                                   resource_type='settings',
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Display settings saved'}), 200
 
@@ -409,7 +409,7 @@ def system_settings():
             AuditLogger.log_action(request.current_user['id'], 'system_settings_updated',
                                   resource_type='settings',
                                   details={'timezone': system['timezone']},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'System settings saved'}), 200
 

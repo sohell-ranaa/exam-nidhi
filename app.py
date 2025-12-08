@@ -74,6 +74,32 @@ def faq():
     return render_template('faq.html')
 
 
+# Health check endpoint for Docker
+@app.route('/health')
+def health():
+    """Health check endpoint for Docker/load balancers"""
+    from flask import jsonify
+    try:
+        # Test database connection
+        from dbs.connection import get_connection
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'app': APP_NAME
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 503
+
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(e):

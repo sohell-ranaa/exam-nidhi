@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
 from src.core.auth import (
     UserManager, PasswordManager, OTPManager, SessionManager,
-    AuditLogger, login_required
+    AuditLogger, login_required, get_client_ip
 )
 from dbs.connection import get_connection
 
@@ -77,7 +77,7 @@ def login():
         if not PasswordManager.verify_password(password, user['password_hash']):
             UserManager.record_failed_login(user['id'])
             AuditLogger.log_action(user['id'], 'login_failed', details={'reason': 'invalid_password'},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
             return jsonify({'error': 'Invalid credentials'}), 401
 
         # Password correct - check for existing session
@@ -99,7 +99,7 @@ def login():
 
                 AuditLogger.log_action(user['id'], 'login_trusted_device',
                                       details={'role': user['role_name']},
-                                      ip_address=request.remote_addr)
+                                      ip_address=get_client_ip())
 
                 return jsonify({
                     'success': True,
@@ -129,13 +129,13 @@ def login():
         # Create session
         session_token, expires_at = SessionManager.create_session(
             user['id'],
-            request.remote_addr,
+            get_client_ip(),
             request.user_agent.string if request.user_agent else None
         )
 
         AuditLogger.log_action(user['id'], 'login_success',
                               details={'role': user['role_name']},
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         # Create response with cookie
         response = make_response(jsonify({
@@ -181,7 +181,7 @@ def logout():
             SessionManager.delete_session(session_token)
 
         AuditLogger.log_action(request.current_user['id'], 'logout',
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         # For GET requests (direct link), redirect to login
         if request.method == 'GET':
@@ -276,7 +276,7 @@ def magic_login(token):
         # Create session
         session_token, expires_at = SessionManager.create_session(
             user_id,
-            request.remote_addr,
+            get_client_ip(),
             request.user_agent.string if request.user_agent else 'Magic Link'
         )
 
@@ -284,7 +284,7 @@ def magic_login(token):
         AuditLogger.log_action(user_id, 'magic_login',
                               resource_type='practice_exam', resource_id=str(exam_id),
                               details={'purpose': link_data['purpose']},
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         # Update last login
         conn = get_connection()
@@ -388,7 +388,7 @@ def reset_password(token):
         conn.close()
 
         AuditLogger.log_action(user_id, 'password_reset_completed',
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         return jsonify({'success': True, 'message': 'Password updated successfully'}), 200
 

@@ -1,0 +1,103 @@
+# Y6 Practice Exam System - Docker Compose
+# All data is persistent across restarts
+
+version: '3.8'
+
+services:
+  # Main Application
+  app:
+    image: ${DOCKER_IMAGE:-y6-practice-exam:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: y6-practice-exam
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5001}:5001"
+    volumes:
+      # Persistent configuration (survives restarts and updates)
+      - app_config:/app/config
+      # Persistent data (uploads, logs, etc.)
+      - app_data:/app/data
+      # Persistent logs
+      - app_logs:/app/logs
+      # Optional: Mount source code for development/updates
+      # - ./:/app:ro
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - CONFIG_DIR=/app/config
+      - DATA_DIR=/app/data
+      - APP_ENV=${APP_ENV:-production}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - y6-network
+    stdin_open: true
+    tty: true
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: y6-practice-exam-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-y6exam2024}
+      - MYSQL_DATABASE=${DB_NAME:-y6_practice_exam}
+      - MYSQL_USER=${DB_USER:-y6user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-y6password}
+      - TZ=Asia/Kuala_Lumpur
+    volumes:
+      # Persistent database storage
+      - db_data:/var/lib/mysql
+      # Initial schema (optional)
+      - ./dbs/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-y6exam2024}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - y6-network
+
+  # Redis (optional - for caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: y6-practice-exam-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - y6-network
+
+# Persistent volumes - data survives container restarts
+volumes:
+  app_config:
+    name: y6-practice-exam-config
+  app_data:
+    name: y6-practice-exam-data
+  app_logs:
+    name: y6-practice-exam-logs
+  db_data:
+    name: y6-practice-exam-db
+  redis_data:
+    name: y6-practice-exam-redis
+
+# Network
+networks:
+  y6-network:
+    name: y6-practice-exam-network
+    driver: bridge

@@ -1,0 +1,35 @@
+{
+  "exported_at": "2025-12-08T10:36:12.914633",
+  "version": "1.0.0",
+  "curriculum": "Cambridge Primary Year 6",
+  "subjects": [
+    {
+      "code": "ENG",
+      "name": "English",
+      "file": "eng_questions.json",
+      "question_sets": 10,
+      "total_questions": 450
+    },
+    {
+      "code": "MAT",
+      "name": "Mathematics",
+      "file": "mat_questions.json",
+      "question_sets": 10,
+      "total_questions": 447
+    },
+    {
+      "code": "ICT",
+      "name": "ICT",
+      "file": "ict_questions.json",
+      "question_sets": 10,
+      "total_questions": 442
+    },
+    {
+      "code": "SCI",
+      "name": "Science",
+      "file": "sci_questions.json",
+      "question_sets": 10,
+      "total_questions": 433
+    }
+  ]
+}

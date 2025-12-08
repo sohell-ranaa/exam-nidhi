@@ -1,0 +1,124 @@
+{
+  "subject": {
+    "code": "ENG",
+    "name": "English",
+    "color": "#0078D4"
+  },
+  "question_sets": [
+    {
+      "title": "Grammar Test Unit 1",
+      "description": "Basic grammar and vocabulary assessment",
+      "duration_minutes": 60,
+      "questions": [
+        {
+          "question_number": 1,
+          "question_type": "mcq",
+          "question_text": "Choose the correct form of the verb: She ___ to school every day.",
+          "options": ["go", "goes", "going", "gone"],
+          "correct_answer": "B",
+          "marks": 1,
+          "hint": "Think about subject-verb agreement for third person singular.",
+          "explanation": "With third person singular (she/he/it), we add 's' to the verb. So 'goes' is correct."
+        },
+        {
+          "question_number": 2,
+          "question_type": "mcq",
+          "question_text": "Which word is a noun?",
+          "options": ["quickly", "beautiful", "happiness", "run"],
+          "correct_answer": "C",
+          "marks": 1,
+          "hint": "A noun is a person, place, thing, or idea.",
+          "explanation": "'Happiness' is an abstract noun representing a feeling or state."
+        },
+        {
+          "question_number": 3,
+          "question_type": "written",
+          "question_text": "Write a sentence using the word 'although' as a conjunction.",
+          "correct_answer": "Any sentence correctly using 'although' to show contrast",
+          "marks": 2,
+          "hint": "'Although' is used to introduce a contrasting idea.",
+          "explanation": "Example: Although it was raining, we went outside to play."
+        },
+        {
+          "question_number": 4,
+          "question_type": "fill_blank",
+          "question_text": "Complete the sentence: The cat sat ___ the mat.",
+          "correct_answer": "on",
+          "marks": 1,
+          "hint": "Think about prepositions of place.",
+          "explanation": "'On' is the correct preposition indicating position on a surface."
+        },
+        {
+          "question_number": 5,
+          "question_type": "matching",
+          "question_text": "Match the synonyms:",
+          "matching_pairs": [
+            {"left": "Happy", "right": "Joyful"},
+            {"left": "Sad", "right": "Unhappy"},
+            {"left": "Big", "right": "Large"},
+            {"left": "Small", "right": "Tiny"}
+          ],
+          "correct_answer": "Happy-Joyful, Sad-Unhappy, Big-Large, Small-Tiny",
+          "marks": 4,
+          "hint": "Find words that have similar meanings.",
+          "explanation": "Synonyms are words with similar or the same meanings."
+        },
+        {
+          "question_number": 6,
+          "question_type": "labeling",
+          "question_text": "Label the parts of speech in the sentence: 'The quick brown fox jumps.'",
+          "image_url": "/static/images/questions/sentence_diagram.png",
+          "labels": [
+            {"id": "label1", "text": "Article", "x": 50, "y": 100},
+            {"id": "label2", "text": "Adjective", "x": 120, "y": 100},
+            {"id": "label3", "text": "Adjective", "x": 200, "y": 100},
+            {"id": "label4", "text": "Noun", "x": 270, "y": 100},
+            {"id": "label5", "text": "Verb", "x": 340, "y": 100}
+          ],
+          "correct_answer": "The=Article, quick=Adjective, brown=Adjective, fox=Noun, jumps=Verb",
+          "marks": 5,
+          "hint": "Identify what role each word plays in the sentence."
+        },
+        {
+          "question_number": 7,
+          "question_type": "drawing",
+          "question_text": "Draw a simple picture to illustrate the word 'house'.",
+          "drawing_template": {
+            "width": 400,
+            "height": 300,
+            "background": "#ffffff",
+            "instructions": "Draw a house with a roof, door, and at least one window."
+          },
+          "correct_answer": "Drawing shows a recognizable house structure",
+          "marks": 3,
+          "hint": "Include basic elements: walls, roof, door, windows."
+        }
+      ]
+    },
+    {
+      "title": "Reading Comprehension Unit 1",
+      "description": "Reading passage with comprehension questions",
+      "duration_minutes": 45,
+      "questions": [
+        {
+          "question_number": 1,
+          "question_type": "mcq",
+          "question_text": "Based on the passage, what is the main character's name?",
+          "question_html": "<div class='passage'><p>Sarah loved spending time in the garden. Every morning, she would water the plants and talk to them. Her grandmother had taught her that plants grow better when you speak to them kindly.</p></div><p class='mt-3'><strong>Question:</strong> What is the main character's name?</p>",
+          "options": ["Mary", "Sarah", "Emma", "Lucy"],
+          "correct_answer": "B",
+          "marks": 1
+        },
+        {
+          "question_number": 2,
+          "question_type": "written",
+          "question_text": "Why did Sarah talk to her plants? Use evidence from the passage.",
+          "question_html": "<div class='passage'><p>Sarah loved spending time in the garden. Every morning, she would water the plants and talk to them. Her grandmother had taught her that plants grow better when you speak to them kindly.</p></div><p class='mt-3'><strong>Question:</strong> Why did Sarah talk to her plants? Use evidence from the passage.</p>",
+          "correct_answer": "Sarah talked to her plants because her grandmother taught her that plants grow better when you speak to them kindly.",
+          "marks": 2,
+          "hint": "Look for what her grandmother taught her."
+        }
+      ]
+    }
+  ]
+}

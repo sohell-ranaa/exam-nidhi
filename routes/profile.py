@@ -14,7 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import login_required, PasswordManager, AuditLogger
+from src.core.auth import login_required, PasswordManager, AuditLogger, get_client_ip
 from dbs.connection import get_connection
 
 profile_bp = Blueprint('profile', __name__, url_prefix='/profile')
@@ -112,7 +112,7 @@ def edit_profile():
                 AuditLogger.log_action(user_id, 'profile_updated',
                                       resource_type='user', resource_id=str(user_id),
                                       details={'full_name': full_name},
-                                      ip_address=request.remote_addr)
+                                      ip_address=get_client_ip())
 
                 return jsonify({'success': True, 'message': 'Profile updated successfully'}), 200
 
@@ -174,7 +174,7 @@ def change_password():
 
                 AuditLogger.log_action(user_id, 'password_changed',
                                       resource_type='user', resource_id=str(user_id),
-                                      ip_address=request.remote_addr)
+                                      ip_address=get_client_ip())
 
                 return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
@@ -253,7 +253,7 @@ def revoke_session(session_id):
 
             AuditLogger.log_action(user_id, 'session_revoked',
                                   resource_type='session', resource_id=str(session_id),
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Session revoked'}), 200
 
@@ -289,7 +289,7 @@ def revoke_all_sessions():
             AuditLogger.log_action(user_id, 'all_sessions_revoked',
                                   resource_type='user', resource_id=str(user_id),
                                   details={'deleted_count': deleted},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({
                 'success': True,

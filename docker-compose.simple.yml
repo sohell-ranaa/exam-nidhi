@@ -1,0 +1,31 @@
+# Y6 Practice Exam - Simple Deployment (External Database)
+# Use this if you have an existing MySQL database
+
+version: '3.8'
+
+services:
+  app:
+    image: ${DOCKER_IMAGE:-ranaislek/y6-practice-exam:latest}
+    container_name: y6-practice-exam
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5001}:5001"
+    volumes:
+      # Persistent configuration
+      - y6_config:/app/config
+      # Persistent data
+      - y6_data:/app/data
+      # Persistent logs
+      - y6_logs:/app/logs
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - CONFIG_DIR=/app/config
+      - DATA_DIR=/app/data
+      - APP_ENV=production
+    stdin_open: true
+    tty: true
+
+volumes:
+  y6_config:
+  y6_data:
+  y6_logs:

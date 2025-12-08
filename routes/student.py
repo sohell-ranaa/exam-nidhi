@@ -14,7 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import login_required, role_required, AuditLogger
+from src.core.auth import login_required, role_required, AuditLogger, get_client_ip
 from dbs.connection import get_connection
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
@@ -380,7 +380,7 @@ def submit_exam(exam_id):
             AuditLogger.log_action(student_id, 'exam_submitted',
                                   resource_type='practice_exam', resource_id=str(exam_id),
                                   details={'is_delayed': is_delayed},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             message = 'Exam submitted successfully'
             if is_delayed:

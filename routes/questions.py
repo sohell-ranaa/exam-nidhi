@@ -16,7 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import role_required, AuditLogger
+from src.core.auth import role_required, AuditLogger, get_client_ip
 from src.core.pagination import Paginator
 from dbs.connection import get_connection
 
@@ -250,7 +250,7 @@ def export_json(set_id):
 
         AuditLogger.log_action(request.current_user['id'], 'export_questions_json',
                               resource_type='question_set', resource_id=str(set_id),
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         return response
 
@@ -402,7 +402,7 @@ def export_pdf(set_id):
 
         AuditLogger.log_action(request.current_user['id'], 'export_questions_pdf',
                               resource_type='question_set', resource_id=str(set_id),
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         return response
 

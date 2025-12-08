@@ -14,7 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import login_required, role_required, AuditLogger, UserManager, PasswordManager
+from src.core.auth import login_required, role_required, AuditLogger, UserManager, PasswordManager, get_client_ip
 from src.core.pagination import Paginator, paginate_query
 from src.core.cache import get_cache, cache_key
 from dbs.connection import get_connection
@@ -209,7 +209,7 @@ def create_student():
         AuditLogger.log_action(request.current_user['id'], 'student_created',
                               resource_type='user', resource_id=str(user_id),
                               details={'email': email, 'full_name': full_name},
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         return jsonify({'success': True, 'message': 'Student created successfully', 'id': user_id}), 200
 
@@ -234,7 +234,7 @@ def toggle_student(student_id):
 
         AuditLogger.log_action(request.current_user['id'], 'student_toggled',
                               resource_type='user', resource_id=str(student_id),
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         return jsonify({'success': True, 'message': 'Student status updated'}), 200
 
@@ -385,7 +385,7 @@ def update_student(student_id):
 
         AuditLogger.log_action(request.current_user['id'], 'student_updated',
                               resource_type='user', resource_id=str(student_id),
-                              details=data, ip_address=request.remote_addr)
+                              details=data, ip_address=get_client_ip())
 
         cursor.close()
         conn.close()
@@ -438,7 +438,7 @@ def reset_student_password(student_id):
                 AuditLogger.log_action(request.current_user['id'], 'password_reset_sent',
                                       resource_type='user', resource_id=str(student_id),
                                       details={'email': student['email']},
-                                      ip_address=request.remote_addr)
+                                      ip_address=get_client_ip())
 
                 return jsonify({'success': True, 'message': f'Password reset link sent to {student["email"]}'}), 200
             else:
@@ -478,7 +478,7 @@ def set_student_password(student_id):
 
         AuditLogger.log_action(request.current_user['id'], 'password_changed_by_admin',
                               resource_type='user', resource_id=str(student_id),
-                              ip_address=request.remote_addr)
+                              ip_address=get_client_ip())
 
         cursor.close()
         conn.close()
@@ -696,7 +696,7 @@ def assign_exam():
             AuditLogger.log_action(request.current_user['id'], 'exam_assigned',
                                   resource_type='practice_exam', resource_id=str(exam_id),
                                   details={'student_id': student_id, 'question_set_id': question_set_id, 'email_sent': email_sent},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({
                 'success': True,
@@ -1064,7 +1064,7 @@ def release_results(exam_id):
             AuditLogger.log_action(request.current_user['id'], 'results_released',
                                   resource_type='practice_exam', resource_id=str(exam_id),
                                   details={'email_sent': email_sent},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({
                 'success': True,
@@ -1456,7 +1456,7 @@ def reset_exam(exam_id):
                                       'exam_title': exam['exam_title'],
                                       'previous_status': exam['status']
                                   },
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({
                 'success': True,

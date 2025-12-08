@@ -15,7 +15,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "dbs"))
 
-from src.core.auth import login_required, AuditLogger
+from src.core.auth import login_required, AuditLogger, get_client_ip
 from dbs.connection import get_connection
 
 public_bp = Blueprint('public', __name__, url_prefix='/share')
@@ -194,7 +194,7 @@ def create_share_link():
             AuditLogger.log_action(request.current_user['id'], 'share_created',
                                   resource_type=share_type, resource_id=str(item_id),
                                   details={'token': token},
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({
                 'success': True,
@@ -246,7 +246,7 @@ def revoke_share():
 
             AuditLogger.log_action(request.current_user['id'], 'share_revoked',
                                   resource_type=share_type, resource_id=str(item_id),
-                                  ip_address=request.remote_addr)
+                                  ip_address=get_client_ip())
 
             return jsonify({'success': True, 'message': 'Share link revoked'}), 200
 

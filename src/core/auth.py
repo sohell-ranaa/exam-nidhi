@@ -22,6 +22,42 @@ from dbs.connection import get_connection
 from config import SESSION_DURATION_DAYS, OTP_VALIDITY_MINUTES, MAX_FAILED_ATTEMPTS, LOCKOUT_DURATION_MINUTES
 
 
+def get_client_ip():
+    """
+    Get the real client IP address, handling proxies and load balancers.
+    Checks headers in order of reliability:
+    1. CF-Connecting-IP (Cloudflare)
+    2. X-Real-IP (Nginx proxy)
+    3. X-Forwarded-For (Standard proxy header, first IP)
+    4. remote_addr (Direct connection fallback)
+    """
+    # Cloudflare
+    if request.headers.get('CF-Connecting-IP'):
+        return request.headers.get('CF-Connecting-IP')
+
+    # Nginx proxy
+    if request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+
+    # Standard proxy header (may contain multiple IPs: client, proxy1, proxy2)
+    if request.headers.get('X-Forwarded-For'):
+        # Get the first IP (original client)
+        forwarded_for = request.headers.get('X-Forwarded-For')
+        # Could be comma-separated list
+        client_ip = forwarded_for.split(',')[0].strip()
+        # Validate it's not a local IP
+        if client_ip and not client_ip.startswith(('127.', '10.', '192.168.', '172.')):
+            return client_ip
+        # If first is local, try to find a public IP
+        for ip in forwarded_for.split(','):
+            ip = ip.strip()
+            if ip and not ip.startswith(('127.', '10.', '192.168.', '172.')):
+                return ip
+
+    # Direct connection fallback
+    return request.remote_addr
+
+
 class AuthenticationError(Exception):
     """Base exception for authentication errors"""
     pass
