@@ -5,6 +5,14 @@ Spring Gate Private School, Malaysia
 
 import os
 
+# Set timezone to Malaysia (GMT+8)
+os.environ['TZ'] = 'Asia/Kuala_Lumpur'
+try:
+    import time
+    time.tzset()
+except:
+    pass
+
 # Flask Configuration
 SECRET_KEY = os.getenv('SECRET_KEY', 'y6-practice-exam-secret-key-2024')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
@@ -19,7 +27,8 @@ DB_CONFIG = {
     "charset": "utf8mb4",
     "collation": "utf8mb4_unicode_ci",
     "autocommit": False,
-    "use_pure": False
+    "use_pure": False,
+    "init_command": "SET time_zone = '+08:00'"  # Malaysia timezone (GMT+8)
 }
 
 # Connection Pool Configuration

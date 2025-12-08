@@ -906,11 +906,8 @@ async function openPreviewModal(examId) {
                 if (exam.exam_date_raw) {
                     document.getElementById('modal-edit-date').value = exam.exam_date_raw;
                 }
-                if (exam.scheduled_time) {
-                    document.getElementById('modal-edit-time').value = exam.scheduled_time;
-                } else {
-                    document.getElementById('modal-edit-time').value = '09:00';
-                }
+                // Keep existing scheduled_time, don't default to 09:00
+                document.getElementById('modal-edit-time').value = exam.scheduled_time || '';
             } else {
                 editSection.style.display = 'none';
             }

@@ -52,15 +52,15 @@ def dashboard():
         cursor.execute("SELECT AVG(percentage) as avg FROM practice_exams WHERE status = 'released'")
         avg_score = cursor.fetchone()['avg'] or 0
 
-        # Recent submissions
+        # Recent submissions (including released ones)
         cursor.execute("""
             SELECT pe.*, u.full_name as student_name, qs.title as exam_title, s.name as subject_name
             FROM practice_exams pe
             JOIN users u ON pe.student_id = u.id
             JOIN question_sets qs ON pe.question_set_id = qs.id
             JOIN subjects s ON qs.subject_id = s.id
-            WHERE pe.status IN ('submitted', 'grading')
-            ORDER BY pe.submitted_at DESC
+            WHERE pe.status IN ('submitted', 'grading', 'released')
+            ORDER BY COALESCE(pe.released_at, pe.submitted_at, pe.created_at) DESC
             LIMIT 10
         """)
         recent_submissions = cursor.fetchall()
@@ -79,6 +79,12 @@ def dashboard():
 
         # Format dates
         for sub in recent_submissions:
+            if sub.get('released_at'):
+                sub['display_date'] = sub['released_at'].strftime('%d %b %Y %H:%M')
+            elif sub.get('submitted_at'):
+                sub['display_date'] = sub['submitted_at'].strftime('%d %b %Y %H:%M')
+            else:
+                sub['display_date'] = ''
             if sub['submitted_at']:
                 sub['submitted_at'] = sub['submitted_at'].strftime('%d %b %Y %H:%M')
             if sub['exam_date']:

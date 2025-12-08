@@ -23,8 +23,8 @@
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
             </svg>
-            <span id="timerText">00:00</span>
-            <span class="timer-label">/ 60:00</span>
+            <span id="timerText">--:--</span>
+            <span class="timer-label" id="timerLabel">remaining</span>
         </div>
     </div>
     <div class="timer-progress">
@@ -123,23 +123,30 @@
                 {% elif question.question_type == 'matching' %}
                 <div class="matching-wrapper">
                     {% if question.matching_pairs %}
-                    <div class="matching-pairs">
-                        <div class="matching-column left-column">
+                    <div class="matching-game" data-question-id="{{ question.id }}">
+                        <div class="matching-left">
                             {% for pair in question.matching_pairs %}
-                            <div class="matching-item">{{ loop.index }}. {{ pair.left }}</div>
+                            <div class="match-left-item" data-index="{{ loop.index }}">
+                                <span class="match-number">{{ loop.index }}</span>
+                                <span class="match-text">{{ pair.left }}</span>
+                                <div class="match-slot" data-left="{{ loop.index }}">
+                                    <span class="slot-placeholder">Drop here</span>
+                                </div>
+                            </div>
                             {% endfor %}
                         </div>
-                        <div class="matching-column right-column">
+                        <div class="matching-right">
                             {% for pair in question.matching_pairs %}
-                            <div class="matching-item">{{ ['A', 'B', 'C', 'D', 'E'][loop.index0] }}. {{ pair.right }}</div>
+                            <div class="match-right-item draggable" draggable="true" data-answer="{{ ['A', 'B', 'C', 'D', 'E', 'F'][loop.index0] }}">
+                                <span class="match-letter">{{ ['A', 'B', 'C', 'D', 'E', 'F'][loop.index0] }}</span>
+                                <span class="match-text">{{ pair.right }}</span>
+                            </div>
                             {% endfor %}
                         </div>
                     </div>
                     {% endif %}
-                    <div class="matching-hint">Match items by typing: 1-A, 2-B, 3-C, etc.</div>
-                    <input type="text" class="fill-blank-input" name="q{{ question.id }}"
+                    <input type="hidden" class="matching-answer" name="q{{ question.id }}"
                            value="{{ question.student_answer or '' }}"
-                           placeholder="e.g., 1-A, 2-B, 3-C, 4-D"
                            onblur="saveAnswer({{ question.id }}, this.value)">
                 </div>
 
@@ -548,33 +555,200 @@
     margin-top: 0;
 }
 
-/* Matching Pairs Display */
-.matching-pairs {
+/* Matching Game - Drag & Drop */
+.matching-game {
     display: flex;
-    gap: 40px;
-    margin-bottom: 16px;
-    padding: 16px;
-    background: var(--neutral-gray-2);
-    border-radius: 8px;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+    border-radius: 16px;
+    border: 3px solid #81c784;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
 }
-.matching-column {
+.matching-left, .matching-right {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
-.matching-item {
-    padding: 10px 14px;
-    background: var(--neutral-white);
-    border: 1px solid var(--neutral-gray-6);
-    border-radius: 6px;
+.matching-left {
+    padding-right: 10px;
+}
+.matching-right {
+    padding-left: 10px;
+    border-left: 2px dashed #81c784;
+}
+.match-left-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    transition: all 0.2s;
+}
+.match-left-item:hover {
+    border-color: #64b5f6;
+}
+.match-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #42a5f5, #1976d2);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.4);
+}
+.match-left-item .match-text {
+    flex: 1;
     font-size: 0.9375rem;
+    color: #333;
+    font-weight: 500;
 }
-.left-column .matching-item {
-    border-left: 3px solid var(--azure-blue);
+.match-slot {
+    min-width: 60px;
+    min-height: 40px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 3px dashed #ffb74d;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
 }
-.right-column .matching-item {
-    border-left: 3px solid var(--success);
+.match-slot.drag-over {
+    background: linear-gradient(135deg, #fff8e1, #ffecb3);
+    border-color: #ff9800;
+    transform: scale(1.08);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+.match-slot.filled {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border: 3px solid #4caf50;
+    border-style: solid;
+}
+.slot-placeholder {
+    color: #ffb74d;
+    font-size: 0.75rem;
+    font-style: italic;
+    font-weight: 500;
+}
+.match-slot.filled .slot-placeholder {
+    display: none;
+}
+.match-right-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: linear-gradient(135deg, #fff, #fafafa);
+    border-radius: 12px;
+    border: 3px solid #66bb6a;
+    cursor: grab;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+    user-select: none;
+    -webkit-user-select: none;
+}
+.match-right-item:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(102, 187, 106, 0.4);
+    border-color: #43a047;
+}
+.match-right-item:active, .match-right-item.dragging {
+    cursor: grabbing;
+    opacity: 0.6;
+    transform: scale(0.95);
+}
+.match-right-item.placed {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    border-style: dashed;
+    background: #f5f5f5;
+}
+.match-letter {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(67, 160, 71, 0.4);
+}
+.match-right-item .match-text {
+    flex: 1;
+    font-size: 0.9375rem;
+    color: #333;
+    font-weight: 500;
+}
+.dropped-answer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+    color: white;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(67, 160, 71, 0.4);
+    transition: all 0.2s;
+}
+.dropped-answer:hover {
+    background: linear-gradient(135deg, #ef5350, #d32f2f);
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+    transform: scale(1.05);
+}
+.dropped-answer::after {
+    content: '×';
+    margin-left: 6px;
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+.dropped-answer:hover::after {
+    opacity: 1;
+}
+/* Touch clone styling */
+.touch-clone {
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff, #e8f5e9);
+    border: 3px solid #43a047;
+}
+@media (max-width: 600px) {
+    .matching-game {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .matching-right {
+        padding-left: 0;
+        padding-top: 16px;
+        border-left: none;
+        border-top: 2px dashed #81c784;
+    }
+    .match-left-item, .match-right-item {
+        padding: 12px;
+    }
+    .match-slot {
+        min-width: 50px;
+        min-height: 36px;
+    }
 }
 
 /* Drawing Wrapper */
@@ -655,61 +829,167 @@ const examId = {{ exam.id }};
 const drawingQuestions = {{ questions | selectattr('question_type', 'equalto', 'drawing') | list | tojson }};
 const totalQuestions = {{ questions|length }};
 
-// Timer configuration - 60 minute window from start
-const SUBMISSION_WINDOW_MINUTES = 60;
-const SUBMISSION_WINDOW_SECONDS = SUBMISSION_WINDOW_MINUTES * 60;
+// Timer configuration from server
+const EXAM_DURATION_MINUTES = {{ exam.duration_minutes or 60 }};
+const EXAM_DURATION_SECONDS = EXAM_DURATION_MINUTES * 60;
 
-// Calculate elapsed time from server
+// Server time sync - calculate remaining seconds
 {% if exam.started_at and now %}
 const serverElapsedSeconds = {{ (now - exam.started_at).total_seconds()|int }};
+const examStartedAt = '{{ exam.started_at }}';
+const serverNow = '{{ now }}';
 {% else %}
 const serverElapsedSeconds = 0;
+const examStartedAt = 'not set';
+const serverNow = '{{ now }}';
 {% endif %}
 
-let elapsedSeconds = Math.max(0, serverElapsedSeconds);
-let timerInterval;
+console.log('Timer Debug:', {
+    duration_minutes: EXAM_DURATION_MINUTES,
+    duration_seconds: EXAM_DURATION_SECONDS,
+    elapsed_seconds: serverElapsedSeconds,
+    started_at: examStartedAt,
+    server_now: serverNow
+});
 
-// Initialize timer (counts UP, not down)
+let remainingSeconds = Math.max(0, EXAM_DURATION_SECONDS - serverElapsedSeconds);
+console.log('Remaining seconds:', remainingSeconds);
+let timerInterval;
+let syncInterval;
+let isSubmitting = false;
+let examEnded = false;
+
+// Initialize countdown timer
 function initTimer() {
     updateTimerDisplay();
     timerInterval = setInterval(updateTimer, 1000);
+    // Sync with server every 30 seconds
+    syncInterval = setInterval(syncWithServer, 30000);
 }
 
 function updateTimer() {
-    elapsedSeconds++;
+    if (examEnded) return;
+
+    remainingSeconds--;
     updateTimerDisplay();
+
+    // Auto-submit when time runs out
+    if (remainingSeconds <= 0 && !isSubmitting) {
+        autoSubmitExam();
+    }
+}
+
+async function syncWithServer() {
+    if (examEnded) return;
+    try {
+        const response = await fetch(`/student/exam/${examId}/time-check`);
+        const data = await response.json();
+        if (data.remaining_seconds !== undefined) {
+            remainingSeconds = Math.max(0, data.remaining_seconds);
+            if (remainingSeconds <= 0 && !isSubmitting) {
+                autoSubmitExam();
+            }
+        }
+    } catch (e) {
+        console.log('Time sync failed, using local timer');
+    }
 }
 
 function updateTimerDisplay() {
-    const minutes = Math.floor(elapsedSeconds / 60);
-    const seconds = elapsedSeconds % 60;
     const display = document.getElementById('timerText');
+    const label = document.getElementById('timerLabel');
     const timerDiv = document.getElementById('timerDisplay');
     const progressBar = document.getElementById('timerProgressBar');
 
-    display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const absRemaining = Math.abs(remainingSeconds);
+    const minutes = Math.floor(absRemaining / 60);
+    const seconds = absRemaining % 60;
 
-    // Progress bar shows time used out of 60 min window
-    const percent = Math.min(100, (elapsedSeconds / SUBMISSION_WINDOW_SECONDS) * 100);
-    progressBar.style.width = percent + '%';
+    if (remainingSeconds <= 0) {
+        display.textContent = `00:00`;
+        label.textContent = 'TIME UP';
+    } else {
+        display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        label.textContent = 'remaining';
+    }
+
+    // Progress bar shows time remaining (fills as time runs out)
+    const usedPercent = Math.min(100, ((EXAM_DURATION_SECONDS - remainingSeconds) / EXAM_DURATION_SECONDS) * 100);
+    progressBar.style.width = usedPercent + '%';
 
     // Status indicators
     timerDiv.classList.remove('warning', 'danger', 'delayed');
 
-    if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS) {
-        // Past 60 minutes - will be marked as delayed
+    if (remainingSeconds <= 0) {
         timerDiv.classList.add('delayed');
         progressBar.style.background = '#D13438';
-    } else if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS - 300) {
-        // Less than 5 minutes left
+    } else if (remainingSeconds <= 300) {
+        // 5 minutes or less
         timerDiv.classList.add('danger');
         progressBar.style.background = '#D13438';
-    } else if (elapsedSeconds > SUBMISSION_WINDOW_SECONDS - 600) {
-        // Less than 10 minutes left
+    } else if (remainingSeconds <= 600) {
+        // 10 minutes or less
         timerDiv.classList.add('warning');
         progressBar.style.background = '#FFB900';
     } else {
         progressBar.style.background = 'var(--azure-blue)';
+    }
+}
+
+// Auto-submit when time expires
+async function autoSubmitExam() {
+    if (isSubmitting || examEnded) return;
+    isSubmitting = true;
+    examEnded = true;
+
+    clearInterval(timerInterval);
+    clearInterval(syncInterval);
+
+    // Block UI
+    document.getElementById('exam-form').style.pointerEvents = 'none';
+    document.getElementById('exam-form').style.opacity = '0.6';
+
+    showToast('Time is up! Auto-submitting your exam...', 'warning');
+
+    // Collect all answers
+    const answers = [];
+    document.querySelectorAll('.question-card').forEach(card => {
+        const qId = card.dataset.questionId;
+        let answer = '';
+
+        const radio = card.querySelector('input[type="radio"]:checked');
+        const drawingData = card.querySelector('input[id^="drawing-data-"]');
+
+        if (radio) {
+            answer = radio.value;
+        } else if (drawingData && drawingData.value && drawingData.value.startsWith('data:image')) {
+            answer = drawingData.value;
+        } else {
+            const text = card.querySelector('input[type="text"]:not([type="hidden"]), textarea');
+            if (text) answer = text.value.trim();
+        }
+
+        answers.push({ question_id: parseInt(qId), answer: answer });
+    });
+
+    try {
+        const response = await fetch(`/student/exam/${examId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers, auto_submit: true })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+            showToast('Exam auto-submitted successfully!', 'success');
+            setTimeout(() => window.location.href = '/student', 2000);
+        } else {
+            showToast('Auto-submit failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Auto-submit error. Please contact your teacher.', 'error');
     }
 }
 
@@ -925,6 +1205,263 @@ function initDrawingCanvases() {
     });
 }
 
+// ============================================
+// MATCHING GAME - Drag & Drop
+// ============================================
+function initMatchingGames() {
+    document.querySelectorAll('.matching-game').forEach(game => {
+        const questionId = game.dataset.questionId;
+        const slots = game.querySelectorAll('.match-slot');
+        const draggables = game.querySelectorAll('.match-right-item.draggable');
+        const hiddenInput = game.closest('.matching-wrapper').querySelector('.matching-answer');
+
+        // Load existing answer
+        if (hiddenInput.value) {
+            loadMatchingAnswer(game, hiddenInput.value);
+        }
+
+        // Desktop drag events
+        draggables.forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+        });
+
+        slots.forEach(slot => {
+            slot.addEventListener('dragover', handleDragOver);
+            slot.addEventListener('dragleave', handleDragLeave);
+            slot.addEventListener('drop', handleDrop);
+        });
+
+        // Touch events for mobile
+        draggables.forEach(item => {
+            item.addEventListener('touchstart', handleTouchStart, { passive: false });
+            item.addEventListener('touchmove', handleTouchMove, { passive: false });
+            item.addEventListener('touchend', handleTouchEnd);
+        });
+    });
+}
+
+let draggedItem = null;
+let touchClone = null;
+let touchStartX = 0;
+let touchStartY = 0;
+
+function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.answer);
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.match-slot').forEach(s => s.classList.remove('drag-over'));
+    draggedItem = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!this.classList.contains('filled')) {
+        this.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (!draggedItem || this.classList.contains('filled')) return;
+
+    const answer = draggedItem.dataset.answer;
+    const answerText = draggedItem.querySelector('.match-text').textContent;
+    const leftIndex = this.dataset.left;
+    const game = this.closest('.matching-game');
+
+    // Place the answer in the slot
+    placeAnswer(this, answer, answerText, game, draggedItem);
+}
+
+function placeAnswer(slot, answer, answerText, game, sourceItem) {
+    // Create dropped answer chip
+    const chip = document.createElement('div');
+    chip.className = 'dropped-answer';
+    chip.dataset.answer = answer;
+    chip.innerHTML = `<span class="chip-letter">${answer}</span>`;
+    chip.title = 'Click to remove';
+
+    // Click to remove
+    chip.addEventListener('click', () => {
+        removeAnswer(slot, answer, game, sourceItem);
+    });
+
+    // Clear slot and add chip
+    slot.innerHTML = '';
+    slot.appendChild(chip);
+    slot.classList.add('filled');
+
+    // Mark source as placed
+    if (sourceItem) {
+        sourceItem.classList.add('placed');
+        sourceItem.draggable = false;
+    }
+
+    // Update hidden input and save
+    updateMatchingAnswer(game);
+}
+
+function removeAnswer(slot, answer, game, sourceItem) {
+    // Restore slot
+    slot.innerHTML = '<span class="slot-placeholder">Drop here</span>';
+    slot.classList.remove('filled');
+
+    // Find and restore the draggable
+    const draggable = game.querySelector(`.match-right-item[data-answer="${answer}"]`);
+    if (draggable) {
+        draggable.classList.remove('placed');
+        draggable.draggable = true;
+    }
+
+    // Update hidden input
+    updateMatchingAnswer(game);
+}
+
+function updateMatchingAnswer(game) {
+    const slots = game.querySelectorAll('.match-slot');
+    const pairs = [];
+
+    slots.forEach(slot => {
+        const leftIndex = slot.dataset.left;
+        const chip = slot.querySelector('.dropped-answer');
+        if (chip) {
+            pairs.push(`${leftIndex}-${chip.dataset.answer}`);
+        }
+    });
+
+    const answer = pairs.join(',');
+    const wrapper = game.closest('.matching-wrapper');
+    const hiddenInput = wrapper.querySelector('.matching-answer');
+    const questionId = game.dataset.questionId;
+
+    hiddenInput.value = answer;
+    saveAnswer(parseInt(questionId), answer);
+
+    // Mark question as answered if all slots filled
+    const card = game.closest('.question-card');
+    if (pairs.length === slots.length) {
+        card.classList.add('answered');
+    } else {
+        card.classList.remove('answered');
+    }
+    updateProgress();
+}
+
+function loadMatchingAnswer(game, answerStr) {
+    if (!answerStr) return;
+
+    // Parse "1-A,2-B,3-C" format
+    const pairs = answerStr.split(',');
+
+    pairs.forEach(pair => {
+        const [leftIndex, answer] = pair.split('-');
+        if (!leftIndex || !answer) return;
+
+        const slot = game.querySelector(`.match-slot[data-left="${leftIndex}"]`);
+        const draggable = game.querySelector(`.match-right-item[data-answer="${answer}"]`);
+
+        if (slot && draggable) {
+            const answerText = draggable.querySelector('.match-text').textContent;
+            placeAnswer(slot, answer, answerText, game, draggable);
+        }
+    });
+}
+
+// ============================================
+// TOUCH SUPPORT FOR MATCHING
+// ============================================
+function handleTouchStart(e) {
+    if (this.classList.contains('placed')) return;
+
+    e.preventDefault();
+    draggedItem = this;
+
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+
+    // Create visual clone for dragging
+    touchClone = this.cloneNode(true);
+    touchClone.classList.add('touch-clone');
+    touchClone.style.cssText = `
+        position: fixed;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0.9;
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        left: ${touch.clientX - this.offsetWidth / 2}px;
+        top: ${touch.clientY - this.offsetHeight / 2}px;
+    `;
+    document.body.appendChild(touchClone);
+
+    this.classList.add('dragging');
+}
+
+function handleTouchMove(e) {
+    if (!draggedItem || !touchClone) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+
+    // Move clone
+    touchClone.style.left = `${touch.clientX - draggedItem.offsetWidth / 2}px`;
+    touchClone.style.top = `${touch.clientY - draggedItem.offsetHeight / 2}px`;
+
+    // Find slot under touch
+    const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = elemBelow?.closest('.match-slot');
+
+    // Clear all drag-over states
+    document.querySelectorAll('.match-slot').forEach(s => s.classList.remove('drag-over'));
+
+    // Highlight current slot
+    if (slot && !slot.classList.contains('filled')) {
+        slot.classList.add('drag-over');
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!draggedItem) return;
+
+    // Find slot under last touch position
+    const touch = e.changedTouches[0];
+    const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = elemBelow?.closest('.match-slot');
+
+    if (slot && !slot.classList.contains('filled')) {
+        const answer = draggedItem.dataset.answer;
+        const answerText = draggedItem.querySelector('.match-text').textContent;
+        const game = slot.closest('.matching-game');
+
+        placeAnswer(slot, answer, answerText, game, draggedItem);
+    }
+
+    // Clean up
+    draggedItem.classList.remove('dragging');
+    document.querySelectorAll('.match-slot').forEach(s => s.classList.remove('drag-over'));
+
+    if (touchClone) {
+        touchClone.remove();
+        touchClone = null;
+    }
+
+    draggedItem = null;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initTimer();
@@ -932,6 +1469,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize drawing canvases
     initDrawingCanvases();
+
+    // Initialize matching games
+    initMatchingGames();
 
     // Add blur handlers for text inputs
     document.querySelectorAll('.fill-blank-input, .written-textarea').forEach(input => {

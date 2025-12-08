@@ -457,19 +457,19 @@
 <!-- Recent Activity -->
 <div class="section-title">Recent Activity</div>
 <div class="activity-list">
-    <div class="activity-header">Latest Exam Submissions</div>
+    <div class="activity-header">Latest Exams</div>
     {% if recent_submissions %}
         {% for sub in recent_submissions %}
-        <div class="activity-item">
+        <a href="{{ url_for('admin.grade_exam', exam_id=sub.id) }}" class="activity-item" style="text-decoration: none; color: inherit;">
             <div class="activity-icon {{ sub.subject_name[:3]|lower }}">
                 {{ sub.subject_name[0] }}
             </div>
             <div class="activity-content">
                 <div class="activity-title">{{ sub.student_name }} - {{ sub.exam_title }}</div>
-                <div class="activity-meta">{{ sub.submitted_at }}</div>
+                <div class="activity-meta">{{ sub.display_date or sub.submitted_at }}</div>
             </div>
             <span class="activity-badge badge-{{ sub.status }}">{{ sub.status|replace('_', ' ')|title }}</span>
-        </div>
+        </a>
         {% endfor %}
     {% else %}
         <div class="empty-state">

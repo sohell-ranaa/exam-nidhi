@@ -88,6 +88,7 @@ class DrawingCanvas {
 
         tools.forEach(tool => {
             const btn = document.createElement('button');
+            btn.type = 'button'; // Prevent form submission
             btn.className = `tool-btn ${tool.id === this.currentTool ? 'active' : ''}`;
             btn.dataset.tool = tool.id;
             btn.title = tool.label;
@@ -96,7 +97,11 @@ class DrawingCanvas {
                     <path d="${tool.icon}"/>
                 </svg>
             `;
-            btn.addEventListener('click', () => this.setTool(tool.id));
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.setTool(tool.id);
+            });
             toolsSection.appendChild(btn);
         });
 
@@ -108,10 +113,15 @@ class DrawingCanvas {
 
         this.colors.forEach(color => {
             const colorBtn = document.createElement('button');
+            colorBtn.type = 'button'; // Prevent form submission
             colorBtn.className = `color-btn ${color === this.options.strokeColor ? 'active' : ''}`;
             colorBtn.style.backgroundColor = color;
             colorBtn.dataset.color = color;
-            colorBtn.addEventListener('click', () => this.setColor(color));
+            colorBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.setColor(color);
+            });
             colorsSection.appendChild(colorBtn);
         });
 
@@ -144,22 +154,37 @@ class DrawingCanvas {
         actionsSection.className = 'toolbar-section actions-section';
 
         const undoBtn = document.createElement('button');
+        undoBtn.type = 'button'; // Prevent form submission
         undoBtn.className = 'action-btn';
         undoBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5"/></svg>';
         undoBtn.title = 'Undo';
-        undoBtn.addEventListener('click', () => this.undo());
+        undoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.undo();
+        });
 
         const redoBtn = document.createElement('button');
+        redoBtn.type = 'button'; // Prevent form submission
         redoBtn.className = 'action-btn';
         redoBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 10H11a5 5 0 00-5 5v2M21 10l-5-5M21 10l-5 5"/></svg>';
         redoBtn.title = 'Redo';
-        redoBtn.addEventListener('click', () => this.redo());
+        redoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.redo();
+        });
 
         const clearBtn = document.createElement('button');
+        clearBtn.type = 'button'; // Prevent form submission
         clearBtn.className = 'action-btn danger';
         clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
         clearBtn.title = 'Clear All';
-        clearBtn.addEventListener('click', () => this.clear());
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.clear();
+        });
 
         actionsSection.appendChild(undoBtn);
         actionsSection.appendChild(redoBtn);
@@ -387,8 +412,8 @@ class DrawingCanvas {
         const imageData = this.canvas.toDataURL('image/png');
         this.history.push(imageData);
 
-        // Limit history to 20 states
-        if (this.history.length > 20) {
+        // Limit history to 10 states (reduced for memory)
+        if (this.history.length > 10) {
             this.history.shift();
         }
 

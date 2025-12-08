@@ -63,10 +63,18 @@ def dashboard():
         """, (student_id,))
         stats = cursor.fetchone()
 
-        # Format dates
+        # Format dates and check schedule
+        now = datetime.now()
         for exam in pending_exams:
             if exam['exam_date']:
-                exam['exam_date'] = exam['exam_date'].strftime('%d %b %Y')
+                exam['exam_date_formatted'] = exam['exam_date'].strftime('%d %b %Y')
+            if exam.get('scheduled_at'):
+                exam['scheduled_time'] = exam['scheduled_at'].strftime('%H:%M')
+                exam['is_scheduled'] = True
+                exam['is_available'] = exam['scheduled_at'] <= now
+            else:
+                exam['is_scheduled'] = False
+                exam['is_available'] = True
 
         for exam in completed_exams:
             if exam['released_at']:
@@ -109,6 +117,13 @@ def take_exam(exam_id):
         # Check if already submitted or released
         if exam['status'] in ('submitted', 'grading', 'released'):
             return redirect(url_for('student.view_results', exam_id=exam_id))
+
+        # Check if exam is scheduled for the future
+        if exam.get('scheduled_at') and exam['scheduled_at'] > datetime.now():
+            return render_template('student/not_available.html',
+                                 exam=exam,
+                                 scheduled_at=exam['scheduled_at'],
+                                 user=request.current_user)
 
         # Start exam if pending - set started_at to NOW
         if exam['status'] == 'pending':
@@ -303,11 +318,15 @@ def submit_exam(exam_id):
                     """, (exam_id, question_id, student_answer, is_correct, marks_awarded, auto_graded,
                           student_answer, is_correct, marks_awarded, auto_graded))
 
-            # Check if submission is delayed (more than 60 minutes from started_at)
+            # Check if submission is delayed (more than duration_minutes from started_at)
             is_delayed = False
             if exam.get('started_at'):
+                # Get duration from question set
+                cursor.execute("SELECT duration_minutes FROM question_sets WHERE id = %s", (exam['qs_id'],))
+                qs = cursor.fetchone()
+                duration = qs['duration_minutes'] if qs and qs['duration_minutes'] else 60
                 elapsed_minutes = (datetime.now() - exam['started_at']).total_seconds() / 60
-                is_delayed = elapsed_minutes > 60  # More than 60 minutes = delayed
+                is_delayed = elapsed_minutes > duration
 
             # Update exam status
             cursor.execute("""
@@ -374,7 +393,7 @@ def view_results(exam_id):
 
         # Get questions with answers
         cursor.execute("""
-            SELECT q.*, sa.student_answer, sa.is_correct, sa.marks_awarded, sa.admin_feedback
+            SELECT q.*, sa.student_answer, sa.drawing_data, sa.is_correct, sa.marks_awarded, sa.admin_feedback
             FROM questions q
             LEFT JOIN student_answers sa ON sa.question_id = q.id AND sa.practice_exam_id = %s
             WHERE q.question_set_id = %s
@@ -382,10 +401,15 @@ def view_results(exam_id):
         """, (exam_id, exam['question_set_id']))
         questions = cursor.fetchall()
 
-        # Parse JSON fields
+        # Parse JSON fields and handle drawing answers
         for q in questions:
             if q['options']:
                 q['options'] = json.loads(q['options']) if isinstance(q['options'], str) else q['options']
+            if q.get('matching_pairs'):
+                q['matching_pairs'] = json.loads(q['matching_pairs']) if isinstance(q['matching_pairs'], str) else q['matching_pairs']
+            # Use drawing_data for drawing questions
+            if q['question_type'] == 'drawing' and q.get('drawing_data'):
+                q['student_answer'] = q['drawing_data']
 
         return render_template('student/results.html',
                              exam=exam,
@@ -538,3 +562,39 @@ def results():
 def history():
     """View exam history - redirect to my-exams"""
     return redirect(url_for('student.my_exams'))
+
+
+@student_bp.route('/exam/<int:exam_id>/time-check')
+@role_required('Student')
+def time_check(exam_id):
+    """Return remaining time for exam (server-authoritative)"""
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    student_id = request.current_user['id']
+
+    try:
+        cursor.execute("""
+            SELECT pe.started_at, qs.duration_minutes
+            FROM practice_exams pe
+            JOIN question_sets qs ON pe.question_set_id = qs.id
+            WHERE pe.id = %s AND pe.student_id = %s AND pe.status = 'in_progress'
+        """, (exam_id, student_id))
+        exam = cursor.fetchone()
+
+        if not exam or not exam['started_at']:
+            return jsonify({'remaining_seconds': 0, 'expired': True})
+
+        duration = exam['duration_minutes'] or 60
+        elapsed = (datetime.now() - exam['started_at']).total_seconds()
+        remaining = (duration * 60) - elapsed
+
+        return jsonify({
+            'remaining_seconds': max(0, int(remaining)),
+            'elapsed_seconds': int(elapsed),
+            'duration_minutes': duration,
+            'expired': remaining <= 0
+        })
+
+    finally:
+        cursor.close()
+        conn.close()

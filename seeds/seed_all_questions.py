@@ -62,9 +62,37 @@ ENGLISH_QUESTIONS = {
         {'text': 'Which word is spelled correctly?', 'type': 'mcq', 'options': ['recieve', 'receive', 'receve', 'receeve'], 'answer': 'receive', 'marks': 1},
         {'text': 'Choose the correct spelling:', 'type': 'mcq', 'options': ['accomodation', 'accommodation', 'acomodation', 'acommodation'], 'answer': 'accommodation', 'marks': 1},
         {'text': 'Which is spelled correctly?', 'type': 'mcq', 'options': ['occurence', 'occurrence', 'occurrance', 'occurance'], 'answer': 'occurrence', 'marks': 1},
+        {'text': 'Choose the correct spelling:', 'type': 'mcq', 'options': ['definately', 'definitly', 'definitely', 'definatly'], 'answer': 'definitely', 'marks': 1},
+        {'text': 'Which word is spelled correctly?', 'type': 'mcq', 'options': ['seperate', 'separate', 'separete', 'seprate'], 'answer': 'separate', 'marks': 1},
+        {'text': 'Choose the correct spelling:', 'type': 'mcq', 'options': ['environment', 'enviroment', 'enviornment', 'enviorment'], 'answer': 'environment', 'marks': 1},
+        {'text': 'Which is spelled correctly?', 'type': 'mcq', 'options': ['goverment', 'government', 'goverment', 'governmant'], 'answer': 'government', 'marks': 1},
+        {'text': 'Choose the correct spelling:', 'type': 'mcq', 'options': ['tommorrow', 'tomorow', 'tomorrow', 'tommorow'], 'answer': 'tomorrow', 'marks': 1},
         # Fill Blank
         {'text': 'Correct the spelling: The _______ (neccessary) items are in the bag.', 'type': 'fill_blank', 'answer': 'necessary', 'marks': 1},
         {'text': 'Correct the spelling: She showed great _______ (independance).', 'type': 'fill_blank', 'answer': 'independence', 'marks': 1},
+        {'text': 'Correct the spelling: It was a _______ (beautifull) day.', 'type': 'fill_blank', 'answer': 'beautiful', 'marks': 1},
+        {'text': 'Correct the spelling: The _______ (libary) is closed today.', 'type': 'fill_blank', 'answer': 'library', 'marks': 1},
+    ],
+    'sentence_structure': [
+        {'text': 'Which sentence is a question?', 'type': 'mcq', 'options': ['The dog runs fast.', 'Where is my book?', 'I love pizza!', 'Please sit down.'], 'answer': 'Where is my book?', 'marks': 1},
+        {'text': 'Identify the subject in: The tall boy kicked the ball.', 'type': 'mcq', 'options': ['kicked', 'ball', 'tall', 'The tall boy'], 'answer': 'The tall boy', 'marks': 1},
+        {'text': 'Which is a compound sentence?', 'type': 'mcq', 'options': ['I went home.', 'The cat slept.', 'I went home and my sister stayed.', 'Running fast.'], 'answer': 'I went home and my sister stayed.', 'marks': 1},
+        {'text': 'The object in "She reads books" is:', 'type': 'mcq', 'options': ['She', 'reads', 'books', 'She reads'], 'answer': 'books', 'marks': 1},
+        {'text': 'Which sentence uses a colon correctly?', 'type': 'mcq', 'options': ['I need: eggs and milk.', 'I need these items: eggs and milk.', 'I: need eggs and milk.', 'I need eggs: and milk.'], 'answer': 'I need these items: eggs and milk.', 'marks': 1},
+        {'text': 'Write a sentence using a semicolon correctly.', 'type': 'written', 'answer': 'Example: I love reading; my sister prefers sports.', 'marks': 2},
+        {'text': 'Combine these sentences: The cat is fluffy. The cat is orange.', 'type': 'written', 'answer': 'The cat is fluffy and orange. / The fluffy cat is orange.', 'marks': 2},
+    ],
+    'parts_of_speech': [
+        {'text': 'Which word is an adverb?', 'type': 'mcq', 'options': ['beautiful', 'quickly', 'happy', 'table'], 'answer': 'quickly', 'marks': 1},
+        {'text': 'Identify the adjective: The bright sun rose early.', 'type': 'mcq', 'options': ['sun', 'rose', 'bright', 'early'], 'answer': 'bright', 'marks': 1},
+        {'text': 'Which is a proper noun?', 'type': 'mcq', 'options': ['city', 'river', 'Malaysia', 'school'], 'answer': 'Malaysia', 'marks': 1},
+        {'text': 'What type of word is "under"?', 'type': 'mcq', 'options': ['noun', 'verb', 'preposition', 'adjective'], 'answer': 'preposition', 'marks': 1},
+        {'text': 'Which word is a verb?', 'type': 'mcq', 'options': ['beautiful', 'running', 'happy', 'the'], 'answer': 'running', 'marks': 1},
+        {'text': 'Identify the noun in: Happiness is important.', 'type': 'mcq', 'options': ['is', 'important', 'Happiness', 'none'], 'answer': 'Happiness', 'marks': 1},
+        {'text': 'The plural of "mouse" is _______.', 'type': 'fill_blank', 'answer': 'mice', 'marks': 1},
+        {'text': 'The past tense of "run" is _______.', 'type': 'fill_blank', 'answer': 'ran', 'marks': 1},
+        {'text': 'The past tense of "swim" is _______.', 'type': 'fill_blank', 'answer': 'swam', 'marks': 1},
+        {'text': 'List 3 adjectives to describe a sunset.', 'type': 'written', 'answer': 'Examples: beautiful, orange, peaceful, stunning, colorful', 'marks': 2},
     ],
 }
 
@@ -128,8 +156,48 @@ MATH_QUESTIONS = {
         {'text': 'The mean of 4, 8, 6, 10, 12 is:', 'type': 'mcq', 'options': ['6', '8', '10', '12'], 'answer': '8', 'marks': 1},
         {'text': 'What is the mode of: 3, 5, 7, 5, 9, 5, 2?', 'type': 'mcq', 'options': ['3', '5', '7', '9'], 'answer': '5', 'marks': 1},
         {'text': 'The range of 15, 23, 8, 31, 12 is:', 'type': 'mcq', 'options': ['15', '23', '31', '23'], 'answer': '23', 'marks': 1},
+        {'text': 'In a bar chart, what does the height of the bar show?', 'type': 'mcq', 'options': ['The category', 'The frequency/value', 'The title', 'The color'], 'answer': 'The frequency/value', 'marks': 1},
+        {'text': 'Which type of chart is best for showing change over time?', 'type': 'mcq', 'options': ['Pie chart', 'Line graph', 'Bar chart', 'Pictogram'], 'answer': 'Line graph', 'marks': 1},
         # Fill Blank
         {'text': 'Find the median of: 2, 5, 8, 11, 14. The median is _______.', 'type': 'fill_blank', 'answer': '8', 'marks': 1},
+        {'text': 'The total of 5, 10, 15, 20 is _______. The mean is _______.', 'type': 'fill_blank', 'answer': '50, 12.5', 'marks': 2},
+    ],
+    'percentages': [
+        {'text': 'What is 25% of 80?', 'type': 'mcq', 'options': ['15', '20', '25', '30'], 'answer': '20', 'marks': 1},
+        {'text': 'Convert 3/4 to a percentage:', 'type': 'mcq', 'options': ['25%', '50%', '75%', '100%'], 'answer': '75%', 'marks': 1},
+        {'text': 'If an item costs RM50 and is discounted by 10%, the new price is:', 'type': 'mcq', 'options': ['RM40', 'RM45', 'RM55', 'RM60'], 'answer': 'RM45', 'marks': 1},
+        {'text': 'What percentage is 15 out of 60?', 'type': 'mcq', 'options': ['15%', '20%', '25%', '30%'], 'answer': '25%', 'marks': 1},
+        {'text': '50% of _______ is 25.', 'type': 'fill_blank', 'answer': '50', 'marks': 1},
+        {'text': 'Express 0.6 as a percentage: _______%.', 'type': 'fill_blank', 'answer': '60', 'marks': 1},
+        {'text': 'A book normally costs RM40. It is on sale for 25% off. Show your working to find the sale price.', 'type': 'written', 'answer': 'Discount = 25% of RM40 = RM10. Sale price = RM40 - RM10 = RM30', 'marks': 2},
+    ],
+    'decimals': [
+        {'text': 'What is 3.5 + 2.75?', 'type': 'mcq', 'options': ['5.25', '6.00', '6.25', '5.75'], 'answer': '6.25', 'marks': 1},
+        {'text': 'Round 4.567 to one decimal place:', 'type': 'mcq', 'options': ['4.5', '4.6', '4.7', '5.0'], 'answer': '4.6', 'marks': 1},
+        {'text': 'What is 0.5 × 0.4?', 'type': 'mcq', 'options': ['0.9', '0.2', '0.02', '2.0'], 'answer': '0.2', 'marks': 1},
+        {'text': 'Convert 7/10 to a decimal:', 'type': 'mcq', 'options': ['0.07', '0.7', '7.0', '70'], 'answer': '0.7', 'marks': 1},
+        {'text': 'Order from smallest to largest: 0.3, 0.25, 0.35', 'type': 'fill_blank', 'answer': '0.25, 0.3, 0.35', 'marks': 1},
+        {'text': '6.8 - 2.35 = _______', 'type': 'fill_blank', 'answer': '4.45', 'marks': 1},
+        {'text': '12.6 ÷ 3 = _______', 'type': 'fill_blank', 'answer': '4.2', 'marks': 1},
+    ],
+    'time_and_measurement': [
+        {'text': 'How many minutes are in 2 hours 30 minutes?', 'type': 'mcq', 'options': ['120', '130', '150', '180'], 'answer': '150', 'marks': 1},
+        {'text': 'Convert 3.5 km to meters:', 'type': 'mcq', 'options': ['350m', '3500m', '35m', '35000m'], 'answer': '3500m', 'marks': 1},
+        {'text': 'How many grams are in 2.5 kg?', 'type': 'mcq', 'options': ['250g', '2500g', '25g', '25000g'], 'answer': '2500g', 'marks': 1},
+        {'text': 'A film starts at 14:30 and lasts 1 hour 45 minutes. What time does it end?', 'type': 'mcq', 'options': ['15:15', '15:45', '16:15', '16:45'], 'answer': '16:15', 'marks': 1},
+        {'text': 'Convert 5000ml to liters: _______ L', 'type': 'fill_blank', 'answer': '5', 'marks': 1},
+        {'text': 'How many seconds are in 5 minutes? _______', 'type': 'fill_blank', 'answer': '300', 'marks': 1},
+        {'text': 'A train leaves at 09:45 and arrives at 11:20. How long is the journey?', 'type': 'written', 'answer': '1 hour 35 minutes', 'marks': 2},
+    ],
+    'algebra_basics': [
+        {'text': 'If x = 5, what is 3x + 2?', 'type': 'mcq', 'options': ['15', '17', '10', '13'], 'answer': '17', 'marks': 1},
+        {'text': 'Solve: y + 7 = 15. What is y?', 'type': 'mcq', 'options': ['7', '8', '22', '10'], 'answer': '8', 'marks': 1},
+        {'text': 'What is the value of 2n when n = 6?', 'type': 'mcq', 'options': ['8', '12', '26', '3'], 'answer': '12', 'marks': 1},
+        {'text': 'If a = 4 and b = 3, what is a + b + ab?', 'type': 'mcq', 'options': ['12', '19', '10', '7'], 'answer': '19', 'marks': 1},
+        {'text': 'Solve: 2x = 10. x = _______', 'type': 'fill_blank', 'answer': '5', 'marks': 1},
+        {'text': 'Solve: m - 8 = 12. m = _______', 'type': 'fill_blank', 'answer': '20', 'marks': 1},
+        {'text': 'If p = 7, calculate 4p - 10', 'type': 'fill_blank', 'answer': '18', 'marks': 1},
+        {'text': 'Write an expression for: 5 more than a number n', 'type': 'written', 'answer': 'n + 5', 'marks': 1},
     ],
 }
 
@@ -357,8 +425,8 @@ def generate_question_set_title(subject_id, topic, set_number):
     return random.choice(titles.get(subject_id, [f"Practice Test {set_number}"]))
 
 
-def get_mixed_questions_for_subject(subject_id, num_questions=12):
-    """Get a MIX of different question types for a subject"""
+def get_mixed_questions_for_subject(subject_id, num_questions=45):
+    """Get a MIX of different question types for a subject (40-50 for 1hr exam)"""
     question_banks = {
         1: ENGLISH_QUESTIONS,
         2: MATH_QUESTIONS,
@@ -385,12 +453,21 @@ def get_mixed_questions_for_subject(subject_id, num_questions=12):
         if type_questions and len(selected) < num_questions:
             selected.append(random.choice(type_questions))
 
-    # Fill remaining with random questions (avoiding duplicates)
+    # Fill remaining with random questions (avoiding duplicates when possible)
     remaining = [q for q in all_questions if q not in selected]
     random.shuffle(remaining)
 
     while len(selected) < num_questions and remaining:
         selected.append(remaining.pop())
+
+    # If we still need more questions, allow duplicates with slight modifications
+    if len(selected) < num_questions:
+        random.shuffle(all_questions)
+        idx = 0
+        while len(selected) < num_questions:
+            q = all_questions[idx % len(all_questions)].copy()
+            selected.append(q)
+            idx += 1
 
     random.shuffle(selected)
     return selected[:num_questions]
@@ -501,9 +578,9 @@ def seed_question_sets(sets_per_subject=10):
             for i in range(1, sets_per_subject + 1):
                 # Create question set
                 title = generate_question_set_title(subject_id, None, i)
-                num_questions = random.randint(10, 15)
+                num_questions = random.randint(40, 50)  # 1-hour exam (~1.5 min/question)
                 difficulty = random.choice(['easy', 'medium', 'hard'])
-                duration = random.choice([30, 45, 60])
+                duration = 60  # Fixed 1 hour for all exams
 
                 # Get mixed questions
                 questions = get_mixed_questions_for_subject(subject_id, num_questions)

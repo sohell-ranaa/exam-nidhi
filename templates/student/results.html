@@ -114,6 +114,60 @@
             </div>
             {% endfor %}
         </div>
+
+        {% elif question.question_type == 'matching' %}
+        <div class="matching-results">
+            <p class="matching-title">Correct Matching:</p>
+            {% if question.matching_pairs %}
+            <table class="matching-table">
+                <thead>
+                    <tr><th>#</th><th>Item</th><th></th><th>Match</th></tr>
+                </thead>
+                <tbody>
+                {% for pair in question.matching_pairs %}
+                <tr>
+                    <td><span class="match-badge blue">{{ loop.index }}</span></td>
+                    <td>{{ pair.left }}</td>
+                    <td class="arrow-cell">→</td>
+                    <td><span class="match-badge green">{{ ['A','B','C','D','E','F'][loop.index0] }}</span> {{ pair.right }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            <div class="answer-compare">
+                <div class="your-answer">
+                    <span class="label">Your answer:</span>
+                    <code>{{ question.student_answer or 'No answer' }}</code>
+                </div>
+                <div class="correct-answer">
+                    <span class="label">Correct:</span>
+                    <code>{{ question.correct_answer }}</code>
+                </div>
+            </div>
+        </div>
+
+        {% elif question.question_type == 'drawing' %}
+        <div class="drawing-results">
+            <div style="margin-bottom: 1rem;">
+                <strong>Your Drawing:</strong>
+                {% if question.student_answer and question.student_answer.startswith('data:image') %}
+                <div class="drawing-preview">
+                    <img src="{{ question.student_answer }}" alt="Your drawing" class="drawing-image">
+                </div>
+                {% else %}
+                <div style="padding: 1rem; background: var(--gray-100); border-radius: var(--radius); margin-top: 0.5rem; color: var(--neutral-gray-50);">
+                    No drawing submitted
+                </div>
+                {% endif %}
+            </div>
+            {% if question.admin_feedback %}
+            <div class="teacher-feedback">
+                <strong>Teacher's Feedback:</strong> {{ question.admin_feedback }}
+            </div>
+            {% endif %}
+        </div>
+
         {% else %}
         <div style="margin-top: 1rem;">
             <div style="margin-bottom: 0.5rem;">
@@ -263,6 +317,215 @@
 .btn-danger:hover {
     background: var(--error);
     color: white;
+}
+
+/* Question Card Separation */
+.question-card {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--neutral-gray-10);
+    border-radius: var(--radius-large);
+    background: var(--neutral-white);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--neutral-gray-4);
+    border-bottom: 1px solid var(--neutral-gray-10);
+}
+.question-number {
+    font-weight: 600;
+    color: var(--neutral-gray-80);
+}
+.question-body {
+    padding: 1rem;
+}
+.question-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+/* Matching Results */
+.matching-results {
+    margin-top: 1rem;
+}
+.matching-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--neutral-gray-80);
+}
+.matching-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f0f9f0, #e8f5e9);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #a5d6a7;
+}
+.matching-table th {
+    background: linear-gradient(135deg, #66bb6a, #4caf50);
+    color: white;
+    padding: 10px;
+    font-size: 0.8125rem;
+    text-align: left;
+}
+.matching-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #c8e6c9;
+    vertical-align: middle;
+}
+.matching-table tr:last-child td {
+    border-bottom: none;
+}
+.matching-table .arrow-cell {
+    text-align: center;
+    color: #43a047;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+.match-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+}
+.match-badge.blue {
+    background: linear-gradient(135deg, #42a5f5, #1e88e5);
+    color: white;
+}
+.match-badge.green {
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+    color: white;
+}
+.answer-compare {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+.answer-compare .your-answer,
+.answer-compare .correct-answer {
+    flex: 1;
+    min-width: 150px;
+}
+.answer-compare .label {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.answer-compare code {
+    display: block;
+    font-family: monospace;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 0.9rem;
+}
+.answer-compare .correct-answer code {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+
+/* Drawing Results */
+.drawing-results {
+    margin-top: 1rem;
+}
+.drawing-preview {
+    margin-top: 0.5rem;
+    padding: 12px;
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border-radius: 12px;
+    border: 2px solid #ffb74d;
+    text-align: center;
+}
+.drawing-image {
+    max-width: 100%;
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    display: inline-block;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.teacher-feedback {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #FFF4CE;
+    border-radius: var(--radius);
+}
+
+/* MCQ Options styling */
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 1rem;
+}
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--neutral-gray-4);
+    border-radius: 8px;
+    border: 2px solid transparent;
+}
+.mcq-option.correct {
+    background: #e8f5e9;
+    border-color: #4caf50;
+}
+.mcq-option.incorrect {
+    background: #ffebee;
+    border-color: #f44336;
+}
+.mcq-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--neutral-gray-30);
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .matching-table {
+        font-size: 0.875rem;
+    }
+    .matching-table th,
+    .matching-table td {
+        padding: 8px;
+    }
+    .match-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
+    }
+    .answer-compare {
+        flex-direction: column;
+    }
+    .drawing-image {
+        max-height: 300px;
+    }
+    .question-card {
+        margin-bottom: 1rem;
+    }
 }
 </style>
 {% endblock %}

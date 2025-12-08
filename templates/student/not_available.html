@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Not Yet Available - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
+    <div class="card-body" style="padding: 3rem 2rem;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 64px; height: 64px; margin: 0 auto 1rem; color: #FFB900;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+
+        <h1 class="page-title">Exam Not Yet Available</h1>
+        <p class="text-muted" style="margin-bottom: 2rem;">
+            <strong>{{ exam.exam_title }}</strong><br>
+            This exam is scheduled to start at a specific time.
+        </p>
+
+        <div style="padding: 1.5rem; background: #FFF4CE; border-radius: var(--radius); margin-bottom: 2rem;">
+            <div class="text-muted" style="font-size: 0.875rem;">Exam starts at</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #835C00;">
+                {{ scheduled_at.strftime('%d %B %Y at %H:%M') }}
+            </div>
+        </div>
+
+        <p class="text-muted">
+            Please come back at the scheduled time to start your exam.
+        </p>
+
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary" style="margin-top: 1.5rem;">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+// Auto-refresh page when scheduled time arrives
+const scheduledTime = new Date('{{ scheduled_at.isoformat() }}');
+function checkTime() {
+    if (new Date() >= scheduledTime) {
+        location.reload();
+    }
+}
+setInterval(checkTime, 10000); // Check every 10 seconds
+</script>
+{% endblock %}

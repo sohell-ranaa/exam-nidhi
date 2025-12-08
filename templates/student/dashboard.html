@@ -36,17 +36,24 @@
     {% if pending_exams %}
     <div>
         {% for exam in pending_exams %}
-        <a href="{{ url_for('student.take_exam', exam_id=exam.id) }}" class="list-item" style="text-decoration: none; color: inherit;">
+        <a href="{% if exam.is_available %}{{ url_for('student.take_exam', exam_id=exam.id) }}{% else %}#{% endif %}" class="list-item" style="text-decoration: none; color: inherit; {% if not exam.is_available %}opacity: 0.7; cursor: not-allowed;{% endif %}">
             <div class="list-item-icon subject-{{ exam.subject_code|lower }}">
                 {{ exam.subject_name[0] }}
             </div>
             <div class="list-item-content">
                 <div class="list-item-title">{{ exam.exam_title }}</div>
-                <div class="list-item-subtitle">{{ exam.subject_name }} - Due: {{ exam.exam_date }}</div>
+                <div class="list-item-subtitle">
+                    {{ exam.subject_name }} - {{ exam.exam_date_formatted }}
+                    {% if exam.is_scheduled %}
+                    <span style="color: #0078D4; font-weight: 600;"> @ {{ exam.scheduled_time }}</span>
+                    {% endif %}
+                </div>
             </div>
             <div class="list-item-action">
                 {% if exam.status == 'in_progress' %}
                 <span class="badge badge-progress">Continue</span>
+                {% elif not exam.is_available %}
+                <span class="badge" style="background: #FFB900; color: #000;">{{ exam.scheduled_time }}</span>
                 {% else %}
                 <span class="badge badge-pending">Start</span>
                 {% endif %}
