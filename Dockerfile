@@ -1,7 +1,7 @@
 # Y6 Practice Exam System - Docker Image
 # Multi-stage build for smaller image size
 
-FROM python:3.11-slim as builder
+FROM python:3.11-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 LABEL maintainer="Spring Gate Private School"
 LABEL description="Y6 Practice Exam System for Primary School Students"
@@ -39,8 +39,10 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Copy application code
 COPY --chown=appuser:appuser . .
 
-# Make scripts executable
-RUN chmod +x /app/docker/entrypoint.sh /app/docker/setup-wizard.py 2>/dev/null || true
+# Make scripts executable and create command wrapper
+RUN chmod +x /app/docker/entrypoint.sh /app/docker/setup-wizard.py 2>/dev/null || true \
+    && echo '#!/bin/bash\nexec /app/docker/entrypoint.sh "$@"' > /usr/local/bin/y6 \
+    && chmod +x /usr/local/bin/y6
 
 # Environment variables
 ENV PATH=/home/appuser/.local/bin:$PATH \

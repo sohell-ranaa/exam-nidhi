@@ -70,14 +70,17 @@ wait_for_db() {
 
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         if python3 -c "
+import sys
+sys.path.insert(0, '/app')
 from dbs.connection import get_connection
 try:
     conn = get_connection()
     conn.close()
     exit(0)
-except:
+except Exception as e:
+    print(f'Connection error: {e}', file=sys.stderr)
     exit(1)
-" 2>/dev/null; then
+"; then
             echo -e "${GREEN}Database connected!${NC}"
             return 0
         fi
@@ -222,11 +225,33 @@ case "${1:-serve}" in
         # Check if first-time setup is needed
         if check_setup_needed; then
             echo -e "${YELLOW}First-time setup required!${NC}"
-            python3 /app/docker/setup-wizard.py
 
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Setup failed or was cancelled.${NC}"
-                exit 1
+            # Check if running interactively (has TTY)
+            if [ -t 0 ]; then
+                # Interactive mode - run setup wizard
+                python3 /app/docker/setup-wizard.py
+
+                if [ $? -ne 0 ]; then
+                    echo -e "${RED}Setup failed or was cancelled.${NC}"
+                    exit 1
+                fi
+            else
+                # Non-interactive mode - wait for manual setup
+                echo -e "${YELLOW}════════════════════════════════════════════════════════════${NC}"
+                echo -e "${YELLOW}  Container started but setup is required.${NC}"
+                echo -e "${YELLOW}  Run the setup wizard manually:${NC}"
+                echo ""
+                echo -e "${GREEN}    docker exec -it y6-practice-exam setup${NC}"
+                echo ""
+                echo -e "${YELLOW}  Waiting for setup to complete...${NC}"
+                echo -e "${YELLOW}════════════════════════════════════════════════════════════${NC}"
+
+                # Wait for setup to complete (check every 5 seconds)
+                while check_setup_needed; do
+                    sleep 5
+                done
+
+                echo -e "${GREEN}Setup complete! Starting application...${NC}"
             fi
         fi
 

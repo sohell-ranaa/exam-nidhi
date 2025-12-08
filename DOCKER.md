@@ -1,314 +1,413 @@
 # Y6 Practice Exam - Docker Deployment Guide
 
-## Quick Start
+## Quick Start (External MySQL)
 
-### Option 1: Pull from Docker Hub (Recommended)
+This guide assumes MySQL/MariaDB is already installed on your server.
 
-```bash
-# Pull the latest image
-docker pull ranaislek/y6-practice-exam:latest
-
-# Run with simple compose (external database)
-curl -O https://raw.githubusercontent.com/yourusername/y6-practice-exam/main/docker-compose.simple.yml
-docker-compose -f docker-compose.simple.yml up -d
-```
-
-### Option 2: Full Stack (App + Database + Redis)
+### Step 1: Pull the Docker Image
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/y6-practice-exam.git
-cd y6-practice-exam
-
-# Start everything
-docker-compose up -d
+docker pull sohellbd/y6-practice-exam:latest
 ```
 
-## First-Time Setup
-
-On first run, the setup wizard will automatically start:
-
-```
-╔═══════════════════════════════════════════════════════════╗
-║           Y6 Practice Exam System                         ║
-║           Spring Gate Private School                      ║
-╚═══════════════════════════════════════════════════════════╝
-
-Welcome to the Y6 Practice Exam System setup!
-
-This wizard will help you configure:
-  • Database connection (MySQL/MariaDB)
-  • Email settings (SMTP for magic links)
-  • Application settings
-  • Admin account
-```
-
-Follow the prompts to configure:
-1. **Database** - MySQL/MariaDB connection details
-2. **Email** - SMTP settings for magic link logins
-3. **Admin Account** - Your administrator login
-4. **Student Account** - Optional student account
-5. **Sample Data** - 500+ practice questions
-
-## Persistent Data
-
-All data is stored in Docker volumes and survives restarts:
-
-| Volume | Purpose |
-|--------|---------|
-| `y6-practice-exam-config` | Configuration files |
-| `y6-practice-exam-data` | Uploads and app data |
-| `y6-practice-exam-logs` | Application logs |
-| `y6-practice-exam-db` | MySQL database |
-| `y6-practice-exam-redis` | Redis cache |
-
-## Commands
-
-### Start/Stop
+### Step 2: Create Deployment Directory
 
 ```bash
-# Start
-docker-compose up -d
+mkdir -p /opt/y6-exam && cd /opt/y6-exam
+```
 
-# Stop
-docker-compose down
+### Step 3: Create docker-compose.yml
 
-# Restart
-docker-compose restart
+```bash
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
 
+services:
+  app:
+    image: sohellbd/y6-practice-exam:latest
+    container_name: y6-practice-exam
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      - y6-config:/app/config
+      - y6-data:/app/data
+      - y6-logs:/app/logs
+    environment:
+      - APP_ENV=production
+      - TZ=Asia/Kuala_Lumpur
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  y6-config:
+  y6-data:
+  y6-logs:
+EOF
+```
+
+### Step 4: Prepare MySQL Database
+
+On your MySQL server, create the database and user:
+
+```sql
+-- Login to MySQL
+mysql -u root -p
+
+-- Create database
+CREATE DATABASE y6_practice_exam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Create user (replace 'yourpassword' with a strong password)
+CREATE USER 'y6user'@'%' IDENTIFIED BY 'yourpassword';
+GRANT ALL PRIVILEGES ON y6_practice_exam.* TO 'y6user'@'%';
+FLUSH PRIVILEGES;
+
+-- Exit
+EXIT;
+```
+
+### Step 5: Start the Application
+
+```bash
+docker compose up -d
+```
+
+### Step 6: First-Time Setup
+
+The setup wizard runs automatically on first start. View it with:
+
+```bash
+docker compose logs -f app
+```
+
+Or run setup manually:
+
+```bash
+docker exec -it y6-practice-exam setup
+```
+
+**Setup Wizard will ask for:**
+
+1. **Database Connection:**
+   - Host: `host.docker.internal` (or your server's IP)
+   - Port: `3306`
+   - Database: `y6_practice_exam`
+   - User: `y6user`
+   - Password: `yourpassword`
+
+2. **SMTP Settings** (for email magic links)
+
+3. **Admin Account** (email & password)
+
+4. **Import Sample Questions** (Y6 Cambridge curriculum - 1,772 questions)
+
+### Step 7: Access the Application
+
+Open browser: `http://YOUR_SERVER_IP:5001`
+
+---
+
+## Setup Caddy (SSL & Reverse Proxy)
+
+Caddy automatically handles SSL certificates from Let's Encrypt.
+
+### Option A: Caddy via Docker (Recommended)
+
+Update your docker-compose.yml:
+
+```bash
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: y6-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+
+  app:
+    image: sohellbd/y6-practice-exam:latest
+    container_name: y6-practice-exam
+    restart: unless-stopped
+    expose:
+      - "5001"
+    volumes:
+      - y6-config:/app/config
+      - y6-data:/app/data
+      - y6-logs:/app/logs
+    environment:
+      - APP_ENV=production
+      - TZ=Asia/Kuala_Lumpur
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  y6-config:
+  y6-data:
+  y6-logs:
+  caddy-data:
+  caddy-config:
+EOF
+```
+
+Create Caddyfile:
+
+```bash
+cat > Caddyfile << 'EOF'
+exam.yourschool.edu {
+    reverse_proxy app:5001 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+EOF
+```
+
+Restart:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### Option B: Install Caddy on Host
+
+```bash
+# Install Caddy
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy -y
+
+# Create Caddyfile
+sudo tee /etc/caddy/Caddyfile << 'EOF'
+exam.yourschool.edu {
+    reverse_proxy 127.0.0.1:5001 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+EOF
+
+# Restart Caddy
+sudo systemctl restart caddy
+```
+
+---
+
+## Management Commands
+
+```bash
 # View logs
-docker-compose logs -f app
-```
+docker compose logs -f app
 
-### Management
-
-```bash
 # Re-run setup wizard
 docker exec -it y6-practice-exam setup
 
-# Update from GitHub
-docker exec -it y6-practice-exam update
-
-# Run migrations
-docker exec -it y6-practice-exam migrate
-
-# Seed Y6 Cambridge curriculum questions
-docker exec -it y6-practice-exam seed
-
-# Show available commands
-docker exec -it y6-practice-exam help
-
-# Open shell
-docker exec -it y6-practice-exam shell
-```
-
-### Question Import/Export
-
-The system includes Y6 Cambridge curriculum questions that can be imported/exported:
-
-```bash
-# Export all questions to JSON and CSV files
-docker exec -it y6-practice-exam export
-# Files saved to: data/questions/
-
-# Import questions from bundled curriculum data
+# Import Y6 Cambridge curriculum questions
 docker exec -it y6-practice-exam import
 
-# Import specific subject only (ENG, MAT, ICT, SCI)
+# Export questions to JSON/CSV
+docker exec -it y6-practice-exam export
+
+# Run database migrations
+docker exec -it y6-practice-exam migrate
+
+# Open shell inside container
+docker exec -it y6-practice-exam shell
+
+# Show all available commands
+docker exec -it y6-practice-exam help
+```
+
+---
+
+## Question Import/Export
+
+### Bundled Questions (Y6 Cambridge Curriculum)
+- English: 450 questions
+- Mathematics: 447 questions
+- ICT: 442 questions
+- Science: 433 questions
+- **Total: 1,772 questions**
+
+### Import Questions
+
+```bash
+# Import all bundled questions
+docker exec -it y6-practice-exam import
+
+# Import specific subject (ENG, MAT, ICT, SCI)
 docker exec -it y6-practice-exam import data/questions MAT
 
-# Clear existing questions before import
+# Clear existing and reimport
 docker exec -it y6-practice-exam import data/questions "" --clear
 ```
 
-**Bundled Question Sets:**
-- English: 450 questions in 10 sets
-- Mathematics: 447 questions in 10 sets
-- ICT: 442 questions in 10 sets
-- Science: 433 questions in 10 sets
-
-Total: **1,772 Y6 Cambridge curriculum questions**
-
-### Update to Latest Version
+### Export Questions
 
 ```bash
+docker exec -it y6-practice-exam export
+# Files saved to: /app/data/questions/
+```
+
+### Custom Questions JSON Format
+
+See `data/questions/SAMPLE_TEMPLATE.json` for format:
+
+```json
+{
+  "subject": {
+    "code": "ENG",
+    "name": "English",
+    "color": "#0078D4"
+  },
+  "question_sets": [
+    {
+      "title": "Grammar Test Unit 1",
+      "duration_minutes": 60,
+      "questions": [
+        {
+          "question_number": 1,
+          "question_type": "mcq",
+          "question_text": "Choose the correct answer...",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "correct_answer": "B",
+          "marks": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Update to Latest Version
+
+```bash
+cd /opt/y6-exam
+
 # Pull latest image
-docker pull ranaislek/y6-practice-exam:latest
+docker compose pull
 
 # Restart with new image
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
-## Environment Variables
-
-You can override settings via environment variables in `docker-compose.yml`:
-
-```yaml
-environment:
-  # Database
-  - DB_HOST=db
-  - DB_PORT=3306
-  - DB_NAME=y6_practice_exam
-  - DB_USER=y6user
-  - DB_PASSWORD=yourpassword
-
-  # Email
-  - SMTP_ENABLED=true
-  - SMTP_HOST=smtp.gmail.com
-  - SMTP_PORT=587
-  - SMTP_USER=your@email.com
-  - SMTP_PASSWORD=yourapppassword
-
-  # App
-  - SECRET_KEY=your-secret-key
-  - APP_ENV=production
-  - AUTO_UPDATE=true
-```
-
-## Auto-Updates from GitHub
-
-If enabled during setup, the app will automatically pull updates from GitHub on each restart:
-
-1. Commits pushed to GitHub
-2. Restart container: `docker-compose restart app`
-3. App pulls latest changes and restarts
-
-To update manually:
-```bash
-docker exec -it y6-practice-exam update
-```
+---
 
 ## Backup & Restore
 
 ### Backup
 
 ```bash
-# Backup all volumes
+# Backup Docker volumes
 docker run --rm \
-  -v y6-practice-exam-config:/config \
-  -v y6-practice-exam-data:/data \
-  -v y6-practice-exam-db:/db \
+  -v y6-config:/config \
+  -v y6-data:/data \
   -v $(pwd):/backup \
-  alpine tar czf /backup/y6-backup-$(date +%Y%m%d).tar.gz /config /data /db
+  alpine tar czf /backup/y6-backup-$(date +%Y%m%d).tar.gz /config /data
+
+# Backup MySQL database
+mysqldump -u y6user -p y6_practice_exam > y6_db_backup_$(date +%Y%m%d).sql
 ```
 
 ### Restore
 
 ```bash
-# Stop containers first
-docker-compose down
-
-# Restore from backup
+# Restore Docker volumes
+docker compose down
 docker run --rm \
-  -v y6-practice-exam-config:/config \
-  -v y6-practice-exam-data:/data \
-  -v y6-practice-exam-db:/db \
+  -v y6-config:/config \
+  -v y6-data:/data \
   -v $(pwd):/backup \
   alpine tar xzf /backup/y6-backup-20240101.tar.gz -C /
 
-# Start again
-docker-compose up -d
+# Restore MySQL database
+mysql -u y6user -p y6_practice_exam < y6_db_backup_20240101.sql
+
+docker compose up -d
 ```
+
+---
 
 ## Troubleshooting
 
 ### Container won't start
 
 ```bash
-# Check logs
-docker logs y6-practice-exam
-
-# Check health
-docker inspect y6-practice-exam | grep -A 10 Health
+docker compose logs app
 ```
 
 ### Database connection failed
 
-```bash
-# Check if database is running
-docker-compose ps db
-
-# Check database logs
-docker-compose logs db
-
-# Test connection manually
-docker exec -it y6-practice-exam-db mysql -u root -p
-```
+- Ensure MySQL is running: `sudo systemctl status mysql`
+- Check if user can connect: `mysql -u y6user -p -h 127.0.0.1 y6_practice_exam`
+- For Docker, use `host.docker.internal` as database host
 
 ### Reset setup
 
 ```bash
-# Remove setup flag to re-run wizard
 docker exec -it y6-practice-exam rm /app/config/.setup_complete
-
-# Restart
-docker-compose restart app
+docker compose restart app
 ```
 
-### Clear all data (CAUTION!)
+### IP shows as 127.0.0.1
 
-```bash
-# Stop everything
-docker-compose down
-
-# Remove volumes
-docker volume rm y6-practice-exam-config y6-practice-exam-data y6-practice-exam-db
-
-# Start fresh
-docker-compose up -d
+Ensure Caddy is configured with proper headers:
+```
+header_up X-Real-IP {remote_host}
+header_up X-Forwarded-For {remote_host}
 ```
 
-## Building Locally
+---
+
+## Quick Reference
+
+| Action | Command |
+|--------|---------|
+| Start | `docker compose up -d` |
+| Stop | `docker compose down` |
+| Logs | `docker compose logs -f app` |
+| Update | `docker compose pull && docker compose up -d` |
+| Setup | `docker exec -it y6-practice-exam setup` |
+| Import Questions | `docker exec -it y6-practice-exam import` |
+| Export Questions | `docker exec -it y6-practice-exam export` |
+| Shell | `docker exec -it y6-practice-exam shell` |
+| Help | `docker exec -it y6-practice-exam help` |
+
+---
+
+## Build from Source
 
 ```bash
+cd /path/to/y6-practice-exam
+
 # Build image
-docker build -t y6-practice-exam:local .
+docker build --network=host -t sohellbd/y6-practice-exam:v1.0.0 .
+docker tag sohellbd/y6-practice-exam:v1.0.0 sohellbd/y6-practice-exam:latest
 
-# Run local build
-docker run -it -p 5001:5001 \
-  -v y6_config:/app/config \
-  -v y6_data:/app/data \
-  y6-practice-exam:local
+# Push to Docker Hub
+docker login -u sohellbd
+docker push sohellbd/y6-practice-exam:v1.0.0
+docker push sohellbd/y6-practice-exam:latest
 ```
 
-## Publishing to Docker Hub
-
-```bash
-# Login
-docker login
-
-# Build and tag
-docker build -t ranaislek/y6-practice-exam:latest .
-docker tag ranaislek/y6-practice-exam:latest ranaislek/y6-practice-exam:v1.0.0
-
-# Push
-docker push ranaislek/y6-practice-exam:latest
-docker push ranaislek/y6-practice-exam:v1.0.0
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Docker Host                          │
-├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │     App      │  │    MySQL     │  │    Redis     │  │
-│  │   (Flask)    │──│   Database   │  │   (Cache)    │  │
-│  │   :5001      │  │   :3306      │  │   :6379      │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-│         │                 │                 │          │
-│  ┌──────┴───────┐  ┌──────┴───────┐  ┌──────┴───────┐  │
-│  │ config vol   │  │   db vol     │  │  redis vol   │  │
-│  │ data vol     │  │              │  │              │  │
-│  │ logs vol     │  │              │  │              │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
+---
 
 ## Support
 
-For issues and questions:
-- GitHub Issues: https://github.com/yourusername/y6-practice-exam/issues
+- GitHub: https://github.com/sohellbd/y6-practice-exam
 - Email: support@springgate.edu.my

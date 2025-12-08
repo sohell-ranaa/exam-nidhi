@@ -4,7 +4,7 @@
 set -e
 
 # Configuration
-DOCKER_USERNAME="${DOCKER_USERNAME:-ranaislek}"
+DOCKER_USERNAME="${DOCKER_USERNAME:-sohellbd}"
 IMAGE_NAME="y6-practice-exam"
 VERSION="${1:-latest}"
 
